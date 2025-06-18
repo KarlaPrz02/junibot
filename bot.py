@@ -8,6 +8,8 @@ from datetime import datetime, UTC
 from datetime import date
 from discord.ui import View, button
 
+active_games = {}
+
 palabras_diarias = []
 FECHA_INICIO = datetime(2025, 6, 6, tzinfo=UTC).date()
 
@@ -179,6 +181,7 @@ ultima_fecha = datetime.now(UTC).date()
 
 
 # Estadísticas por usuario
+user_stats = {}
 user_stats: Dict[int, Dict[str, int]] = {}
 
 def feedback(palabra_objetivo, intento):
@@ -342,8 +345,11 @@ async def stats_slash(interaction: discord.Interaction):
     embed.add_field(name="Victorias", value=str(stats["victorias"]), inline=True)
     embed.add_field(name="Derrotas", value=str(stats["derrotas"]), inline=True)
     embed.set_footer(text="¡Sigue jugando para mejorar tus resultados!")
+    
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(label="Ver ranking online", url="https://karlaprz02.github.io/wordle-stats/"))
 
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.response.send_message(embed=embed, ephemeral=True, view=view)
 
 
 
@@ -363,12 +369,14 @@ def cargar_stats():
         try:
             with open(STATS_FILE, "r", encoding="utf-8") as f:
                 contenido = f.read().strip()
-                user_stats = json.loads(contenido) if contenido else {}
+                data = json.loads(contenido) if contenido else {}
+                user_stats = {int(k): v for k, v in data.items()}
         except (json.JSONDecodeError, IOError):
             print("⚠️ El archivo stats.json está vacío o corrupto. Se reinician las estadísticas.")
             user_stats = {}
     else:
         user_stats = {}
+
         
 def cargar_palabras():
     global palabras_diarias
@@ -426,8 +434,14 @@ async def top_slash(interaction: discord.Interaction):
             value=f"✅ Victorias: {stats['victorias']} | ❌ Derrotas: {stats['derrotas']}",
             inline=False
         )
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(label="Ver ranking online", url="https://karlaprz02.github.io/wordle-stats/"))
 
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed, view=view)
+
+
+    
+
     
 async def iniciar_wordle(interaction: discord.Interaction):
     limpiar_cache_si_cambio_dia()
