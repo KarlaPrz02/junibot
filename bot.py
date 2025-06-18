@@ -6,6 +6,7 @@ import random
 import json
 from datetime import datetime, UTC
 from datetime import date
+from discord.ui import View, button
 
 palabras_diarias = []
 FECHA_INICIO = datetime(2025, 6, 6, tzinfo=UTC).date()
@@ -109,31 +110,57 @@ class EstadoGroup(app_commands.Group):
         with open(image_path, "rb") as f:
             file = discord.File(f, filename=selected_image)
             await interaction.followup.send(file=file)
+            
+            
+
 
 # grupo de comandos 
 bot.tree.add_command(EstadoGroup())
 
 # slash help
 
+class HelpView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+    @button(label="Ayuda General", style=discord.ButtonStyle.primary, custom_id="help_general")
+    async def general(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title="Ayuda General",
+            description="Aquí tienes información general sobre los comandos del bot:",
+            color=discord.Color.blue()  
+        )
+        embed.add_field(name="/juni", value="Menciona a Juni.", inline=False)
+        embed.add_field(name="/help", value="Este menú de ayuda.", inline=False)
+        embed.add_field(name="/estado", value="Muestra los estados de Juni.", inline=False)
+        embed.set_footer(text="Desarrollado por KatPrz02")
+        await interaction.message.edit(embed=embed, view=self)
+        await interaction.response.defer()  # evita el error "This interaction has already been responded to"
+
+    @button(label="Ayuda Wordle", style=discord.ButtonStyle.success, custom_id="help_wordle")
+    async def wordle(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title="Ayuda Wordle",
+            description="Guía para jugar al Wordle en este bot:",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="/wordle", value="Inicia una partida diaria de Wordle.", inline=False)
+        embed.add_field(name="/intento <palabra>", value="Envía un intento de 5 letras.", inline=False)
+        embed.add_field(name="/historial", value="Muestra tus intentos actuales.", inline=False)
+        embed.add_field(name="/stats", value="Tus estadísticas de Wordle.", inline=False)
+        embed.add_field(name="/top", value="Ranking de mejores jugadores.", inline=False)
+        embed.set_footer(text="Desarrollado por KatPrz02")
+        await interaction.message.edit(embed=embed, view=self)
+        await interaction.response.defer()
 
 @bot.tree.command(name="help", description="Muestra información sobre el bot")
 async def help_slash(interaction: discord.Interaction):
     embed = discord.Embed(
         title="Ayuda de Juni Bot",
-        description="Bot ya no tan simple para mencionar a Juni en sus dos cuentas y jugar al Wordle en español.\n\n**Comandos disponibles:**",
+        description="Selecciona qué tipo de ayuda quieres",
         color=discord.Color.blurple()
     )
-    embed.add_field(name="/juni", value="Menciona a Juni.", inline=False)
-    embed.add_field(name="/help", value="Muestra este mensaje de ayuda.", inline=False)
-    embed.add_field(name="/estado", value="Envía la ruleta de los estados de Juni.", inline=False)
-    embed.add_field(name="/estado actual", value="Muestra un estado aleatorio de Juni.", inline=False)
-    embed.add_field(name="/wordle", value="Comienza una partida de Wordle en español.", inline=False)
-    embed.add_field(name="/historial", value="Muestra el historial de tu partida de Wordle.", inline=False)
-    embed.add_field(name="/stats", value="Esta roto no funca", inline=False)
-    embed.add_field(name="/top", value="Esta roto no funca", inline=False)
-    embed.set_footer(text="Desarrollado por KatPrz02")
-
-    await interaction.response.send_message(embed=embed)
+    view = HelpView()
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=False)
 
 @bot.command(name="juni")
 async def juni_prefix(ctx):
