@@ -31,19 +31,6 @@ intents.presences = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Cargar palabras válidas desde archivo
-# palabras_validas = set()
-
-# def cargar_palabras_validas():
-#    global palabras_validas
-#    try:
-#        with open("palabras_5_letras_limpias.txt", encoding="utf-8") as f:
-#            palabras_validas = set(line.strip().lower() for line in f if len(line.strip()) == 5)
-#        print(f"✅ Cargadas {len(palabras_validas)} palabras válidas.")
-#    except FileNotFoundError:
-#        print("❌ No se encontró el archivo 'palabras_5_letras_limpias.txt'.")
-#        palabras_validas = set()
-
 @bot.event
 async def on_ready():
     print(f"Connected as {bot.user}")
@@ -58,7 +45,6 @@ async def on_ready():
 
     activity = discord.Activity(type=discord.ActivityType.watching, name="Juni")
     await bot.change_presence(status=discord.Status.online, activity=activity)
-
 
 
 # class de boton de jugar
@@ -266,9 +252,6 @@ async def intento_slash(interaction: discord.Interaction, palabra: str):
         await interaction.response.send_message("❌ La palabra debe tener exactamente 5 letras.", ephemeral=True)
         return
     
-    # if palabra not in palabras_validas:
-    #    await interaction.response.send_message("❌ Esa palabra no está en la lista de palabras válidas.", ephemeral=True)
-    #    return
 
     partida = active_games[user_id]
     palabra_objetivo = partida["palabra"]
@@ -318,18 +301,6 @@ def limpiar_cache_si_cambio_dia():
         ultima_fecha = hoy
 
 
-# palabras_validas = set()
-
-# def cargar_palabras_validas():
-#    global palabras_validas
-#    try:
-#        with open("palabras_5_letras_limpias.txt", encoding="utf-8") as f:
-#            palabras_validas = set(line.strip().lower() for line in f if len(line.strip()) == 5)
-#        print(f"✅ Cargadas {len(palabras_validas)} palabras válidas.")
-#    except FileNotFoundError:
-#        print("❌ No se encontró el archivo 'palabras_5_letras_limpias.txt'.")
-#        palabras_validas = set()
-
 
 # slash stats
     
@@ -347,7 +318,7 @@ async def stats_slash(interaction: discord.Interaction):
     embed.set_footer(text="¡Sigue jugando para mejorar tus resultados!")
     
     view = discord.ui.View()
-    view.add_item(discord.ui.Button(label="Ver ranking online", url="https://karlaprz02.github.io/wordle-stats/"))
+    view.add_item(discord.ui.Button(label="Ver stats online", url="https://karlaprz02.github.io/wordle/"))
 
     await interaction.response.send_message(embed=embed, ephemeral=True, view=view)
 
@@ -435,7 +406,7 @@ async def top_slash(interaction: discord.Interaction):
             inline=False
         )
     view = discord.ui.View()
-    view.add_item(discord.ui.Button(label="Ver ranking online", url="https://karlaprz02.github.io/wordle-stats/"))
+    view.add_item(discord.ui.Button(label="Ver stats online", url="https://karlaprz02.github.io/wordle/"))
 
     await interaction.response.send_message(embed=embed, view=view)
 
@@ -528,4 +499,5 @@ async def historial_slash(interaction: discord.Interaction):
 
 
 bot.run("TOKEN")
+
 
