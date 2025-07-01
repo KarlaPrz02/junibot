@@ -33,18 +33,22 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f"Connected as {bot.user}")
+    
+    cargar_stats()
+    cargar_palabras()
+
+    print(f"Connecting as {bot.user}...")
+
     try:
         synced = await bot.tree.sync()
         print(f"Slash commands synced: {[cmd.name for cmd in synced]}")
     except Exception as e:
         print(f"Error sync commands: {e}")
-    
-    cargar_stats()
-    cargar_palabras()
 
     activity = discord.Activity(type=discord.ActivityType.watching, name="Juni")
     await bot.change_presence(status=discord.Status.online, activity=activity)
+
+    print("Bot is ready!")
 
 
 # class de boton de jugar
@@ -161,6 +165,8 @@ from typing import Dict  # noqa: E402
 
 # Partidas activas por usuario
 active_games: Dict[int, Dict] = {}
+ended_games: Dict[int, Dict] = {}
+
 
 ultima_fecha = datetime.now(ZoneInfo("Europe/Madrid")).date()
 
@@ -283,6 +289,7 @@ async def intento_slash(interaction: discord.Interaction, palabra: str):
         mensaje_publico += "\n" + f"```{grid}```" + "\n"
         actualizar_stats(user_id, victoria=True)
         await canal.send(mensaje_publico, view=JugarWordleView())
+        ended_games[user_id] = partida  # Mover a partidas finalizadas
         del active_games[user_id]
 
     elif partida["intentos"] >= 6:
@@ -291,6 +298,7 @@ async def intento_slash(interaction: discord.Interaction, palabra: str):
         mensaje_publico += "\n" + f"```{grid}```" + "\n"
         actualizar_stats(user_id, victoria=False)
         await canal.send(mensaje_publico, view=JugarWordleView())
+        ended_games[user_id] = partida  # Mover a partidas finalizadas
         del active_games[user_id]
         
 def limpiar_cache_si_cambio_dia():
@@ -350,6 +358,7 @@ def cargar_stats():
 
         
 def cargar_palabras():
+    print("Cargando palabras...")
     global palabras_diarias
     try:
         with open("palabras.txt", encoding="utf-8") as f:
@@ -357,6 +366,8 @@ def cargar_palabras():
     except FileNotFoundError:
         print("❌ No se encontró 'palabras.txt'")
         palabras_diarias = []
+
+    print(f"Palabras cargadas: {len(palabras_diarias)}")
         
 def obtener_palabra_del_dia():
     hoy = datetime.now(ZoneInfo("Europe/Madrid")).date()
@@ -462,26 +473,43 @@ async def historial_slash(interaction: discord.Interaction):
     limpiar_cache_si_cambio_dia()
     user_id = interaction.user.id
 
-    if user_id not in active_games:
-        await interaction.response.send_message("❌ No tienes una partida activa. Usa `/wordle` para empezar.", ephemeral=True)
+    if user_id not in active_games and user_id not in ended_games:
+        await interaction.response.send_message("❌ Hoy no has jugado. Usa `/wordle` para empezar.", ephemeral=True)
         return
 
-    partida = active_games[user_id]
+    if user_id in ended_games:
+        partida = ended_games[user_id]
+        is_completed = True
+    else:
+        partida = active_games[user_id]
+        is_completed = False
 
     if not partida["historial"]:
         await interaction.response.send_message("⚠️ Aún no has hecho ningún intento.", ephemeral=True)
         return
+    
+    if is_completed:
+        title = f"📋 Historial de Wordle — Completada en {partida['intentos']} intentos" if partida["intentos"] < 6 else "📋 Historial de Wordle — Fallida"
+    else:
+        title = f"📋 Historial de Wordle — Intento {partida['intentos']} de 6"
 
     embed = discord.Embed(
-        title=f"📋 Historial de Wordle — Intento {partida['intentos']} de 6",
+        title=title,
         color=discord.Color.teal()
     )
 
     grid = "\n".join(f"{l}\n{c}" for l, c in partida["historial"])
-    embed.add_field(name="Progreso", value=f"```{grid}```", inline=False)
+    embed.add_field(name="Progreso" if not is_completed else "Resultado", value=f"```{grid}```", inline=False)
 
     intentos_restantes = 6 - partida["intentos"]
-    embed.set_footer(text=f"{intentos_restantes} intento(s) restante(s)" if intentos_restantes else "Último intento")
+
+    if is_completed:
+        embed.add_field(name="Palabra del día", value=partida["palabra"].upper(), inline=False)
+    else:
+        if intentos_restantes > 0:
+            embed.set_footer(text=f"{intentos_restantes} intento(s) restante(s)")
+        else:
+            embed.set_footer(text="Último intento")
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
     
