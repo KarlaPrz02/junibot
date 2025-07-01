@@ -4,17 +4,17 @@ import os
 from discord import app_commands
 import random
 import json
-from datetime import datetime, UTC
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from discord.ui import View, button
 
 active_games = {}
 
 palabras_diarias = []
-FECHA_INICIO = datetime(2025, 6, 6, tzinfo=UTC).date()
+FECHA_INICIO = datetime(2025, 6, 6, tzinfo=ZoneInfo("Europe/Madrid")).date()
 
 def obtener_palabra_del_dia():
-    hoy = datetime.now(UTC).date()
+    hoy = datetime.now(ZoneInfo("Europe/Madrid")).date()
     dias_transcurridos = (hoy - FECHA_INICIO).days
     return palabras_diarias[dias_transcurridos % len(palabras_diarias)]
 
@@ -162,7 +162,7 @@ from typing import Dict  # noqa: E402
 # Partidas activas por usuario
 active_games: Dict[int, Dict] = {}
 
-ultima_fecha = datetime.now(UTC).date()
+ultima_fecha = datetime.now(ZoneInfo("Europe/Madrid")).date()
 
 
 
@@ -197,7 +197,7 @@ def feedback(palabra_objetivo, intento):
 async def wordle_slash(interaction: discord.Interaction):
     limpiar_cache_si_cambio_dia()
     user_id = interaction.user.id
-    hoy = datetime.now(UTC).date().isoformat()
+    hoy = datetime.now(ZoneInfo("Europe/Madrid")).date().isoformat()
 
     stats = user_stats.get(user_id, {})
     ultima = stats.get("ultima_partida")
@@ -295,7 +295,7 @@ async def intento_slash(interaction: discord.Interaction, palabra: str):
         
 def limpiar_cache_si_cambio_dia():
     global ultima_fecha, active_games
-    hoy = datetime.now(UTC).date()
+    hoy = datetime.now(ZoneInfo("Europe/Madrid")).date()
     if hoy != ultima_fecha:
         active_games.clear()
         ultima_fecha = hoy
@@ -359,7 +359,7 @@ def cargar_palabras():
         palabras_diarias = []
         
 def obtener_palabra_del_dia():
-    hoy = datetime.now(UTC).date()
+    hoy = datetime.now(ZoneInfo("Europe/Madrid")).date()
     dias_transcurridos = (hoy - FECHA_INICIO).days
     if dias_transcurridos < len(palabras_diarias):
         return palabras_diarias[dias_transcurridos]
@@ -370,7 +370,7 @@ def obtener_palabra_del_dia():
 
 
 def actualizar_stats(user_id: int, victoria: bool):
-    hoy = datetime.now(UTC).date().isoformat()
+    hoy = datetime.now(ZoneInfo("Europe/Madrid")).date().isoformat()
     user_stats.setdefault(user_id, {"victorias": 0, "derrotas": 0, "ultima_partida": ""})
     if victoria:
         user_stats[user_id]["victorias"] += 1
@@ -417,7 +417,7 @@ async def top_slash(interaction: discord.Interaction):
 async def iniciar_wordle(interaction: discord.Interaction):
     limpiar_cache_si_cambio_dia()
     user_id = interaction.user.id
-    hoy = datetime.now(UTC).date().isoformat()
+    hoy = datetime.now(ZoneInfo("Europe/Madrid")).date().isoformat()
 
     stats = user_stats.get(user_id, {})
     ultima = stats.get("ultima_partida")
