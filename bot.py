@@ -400,7 +400,7 @@ async def top_slash(interaction: discord.Interaction):
         return
 
     # victorias descendente, luego derrotas ascendente
-    ranking = sorted(user_stats.items(), key=lambda item: (item[1]["victorias"], -item[1]["derrotas"]))
+    ranking = sorted(user_stats.items(), key=lambda item: (item[1]["victorias"], -item[1]["derrotas"]), reverse=True)
 
     embed = discord.Embed(
         title="🏆 Ranking de Wordle",
@@ -520,7 +520,11 @@ async def historial_slash(interaction: discord.Interaction):
 
 
 
-
+def uwu(text):
+    global def owo():
+        return text.replace("r", "w").replace("l", "w").replace("R", "W").replace("L", "W")
+    
+owo()
 
 
 
