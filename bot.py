@@ -520,11 +520,6 @@ async def historial_slash(interaction: discord.Interaction):
 
 
 
-def uwu(text):
-    global def owo():
-        return text.replace("r", "w").replace("l", "w").replace("R", "W").replace("L", "W")
-    
-owo()
 
 
 
