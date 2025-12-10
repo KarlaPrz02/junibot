@@ -104,10 +104,35 @@ class EstadoGroup(app_commands.Group):
             await interaction.followup.send(file=file)
             
             
+# slash carla
+class carlaGroup(app_commands.Group):
+    def __init__(self):
+        super().__init__(name="carla", description="Opciones relacionadas con los comandos de carla.")
+
+    @app_commands.command(name="imagen", description="Envía la ruleta de los estados de Carla.")
+    async def ruleta(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        image_path = os.path.join("assets", "image2.png")
+        with open(image_path, "rb") as f:
+            file = discord.File(f, filename="image2.png")
+            await interaction.followup.send(file=file)
+
+    @app_commands.command(name="actual", description="Muestra un estado aleatorio de Carla.")
+    async def actual(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        image_files = ["noche.PNG", "muejeje.PNG", "insane.gif", "breakdown.PNG"]
+        selected_image = random.choice(image_files)
+        image_path = os.path.join("assets", selected_image)
+        with open(image_path, "rb") as f:
+            file = discord.File(f, filename=selected_image)
+            await interaction.followup.send(file=file)
+            
+            
 
 
 # grupo de comandos 
 bot.tree.add_command(EstadoGroup())
+bot.tree.add_command(carlaGroup())
 
 # slash help
 
@@ -124,6 +149,7 @@ class HelpView(discord.ui.View):
         embed.add_field(name="/juni", value="Menciona a Juni.", inline=False)
         embed.add_field(name="/help", value="Este menú de ayuda.", inline=False)
         embed.add_field(name="/estado", value="Muestra los estados de Juni.", inline=False)
+        embed.add_field(name="/carla", value="Muestra los estados de Carla.", inline=False)
         embed.set_footer(text="Desarrollado por KatPrz02")
         await interaction.message.edit(embed=embed, view=self)
         await interaction.response.defer()  # evita el error "This interaction has already been responded to"
@@ -525,6 +551,6 @@ async def historial_slash(interaction: discord.Interaction):
 
 
 
-bot.run("TOKEN")
+bot.run("DISCORD_TOKEN")
 
 
