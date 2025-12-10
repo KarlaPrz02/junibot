@@ -148,8 +148,10 @@ class HelpView(discord.ui.View):
         )
         embed.add_field(name="/juni", value="Menciona a Juni.", inline=False)
         embed.add_field(name="/help", value="Este menú de ayuda.", inline=False)
-        embed.add_field(name="/estado", value="Muestra los estados de Juni.", inline=False)
-        embed.add_field(name="/carla", value="Muestra los estados de Carla.", inline=False)
+        embed.add_field(name="/estado imagen", value="Muestra los estados de Juni.", inline=False)
+        embed.add_field(name="/estado actual", value="Muestra un estado aleatorio de Juni.", inline=False)
+        embed.add_field(name="/carla imagen", value="Muestra los estados de Carla.", inline=False)
+        embed.add_field(name="/carla actual", value="Muestra un estado aleatorio de Carla.", inline=False)
         embed.set_footer(text="Desarrollado por KatPrz02")
         await interaction.message.edit(embed=embed, view=self)
         await interaction.response.defer()  # evita el error "This interaction has already been responded to"
