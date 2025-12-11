@@ -9,7 +9,7 @@ from discord.ext import commands
 from typing import Optional
 
 TZ = ZoneInfo("Europe/Madrid")
-DATE_FORMAT = "%d-%m-%Y"  
+DATE_FORMAT = "%d-%m" 
 
 DATA_FILE = "birthdays.json"  # guarda cumpleaños por servidor
 CONFIG_FILE = "config.json"   # mapa guild_id -> channel_id 
@@ -162,7 +162,7 @@ ACTIONS = [
 
 @app_commands.command(name="cumpleaños", description="Gestiona tu cumpleaños en este servidor: add/view/delete/edit")
 @app_commands.choices(action=ACTIONS)
-@app_commands.describe(action="Acción a realizar", fecha="Fecha (DD-MM-YYYY) — para add", new_fecha="Nueva fecha (DD-MM-YYYY) — para edit")
+@app_commands.describe(action="Acción a realizar", fecha="Fecha (DD-MM) — para add", new_fecha="Nueva fecha (DD-MM) — para edit")
 async def cumple_command(
     interaction: discord.Interaction,
     action: app_commands.Choice[str],
@@ -185,12 +185,12 @@ async def cumple_command(
     # ADD
     if act == "add":
         if not fecha:
-            await interaction.followup.send("Debes indicar la fecha con formato `YYYY-MM-DD`.", ephemeral=True)
+            await interaction.followup.send("Debes indicar la fecha con formato `DD-MM`.", ephemeral=True)
             return
         try:
             dt = datetime.strptime(fecha, DATE_FORMAT).date()
         except Exception:
-            await interaction.followup.send("Formato inválido. Usa `DD-MM-YYYY` (ej: 11-12-2000).", ephemeral=True)
+            await interaction.followup.send("Formato inválido. Usa `DD-MM` (ej: 11-12).", ephemeral=True)
             return
         await cog.add_birthday(interaction.guild.id, interaction.user.id, dt.isoformat())
         await interaction.followup.send(f"✅ Tu cumpleaños ha sido guardado como `{dt.strftime(DATE_FORMAT)}` en este servidor.", ephemeral=True)
@@ -218,12 +218,12 @@ async def cumple_command(
     # EDIT
     if act == "edit":
         if not new_fecha:
-            await interaction.followup.send("Debes indicar la nueva fecha con `new_fecha` (`DD-MM-YYYY`).", ephemeral=True)
+            await interaction.followup.send("Debes indicar la nueva fecha con `new_fecha` (`DD-MM`).", ephemeral=True)
             return
         try:
             ndt = datetime.strptime(new_fecha, DATE_FORMAT).date()
         except Exception:
-            await interaction.followup.send("Formato inválido para `new_fecha`. Usa `DD-MM-YYYY`.", ephemeral=True)
+            await interaction.followup.send("Formato inválido para `new_fecha`. Usa `DD-MM`.", ephemeral=True)
             return
         await cog.add_birthday(interaction.guild.id, interaction.user.id, ndt.isoformat())
         await interaction.followup.send(f"✅ Tu cumpleaños ha sido actualizado a `{ndt.strftime(DATE_FORMAT)}` en este servidor.", ephemeral=True)
