@@ -99,7 +99,7 @@ class Birthdays(commands.Cog):
                         channel = self.bot.get_channel(channel_id)
                         mentions = " ".join(f"<@{m['user_id']}>" for m in matches)
                         names = ", ".join(f"<@{m['user_id']}>" for m in matches)
-                        text = f"🎉 ¡Hoy es el cumpleaños de {names}! 🎂\n{mentions}\n"
+                        text = f"🎉 ¡Hoy es el cum-ple de {names}! 🎂\n{mentions}\n"
                         if channel:
                             await channel.send(f"@everyone\n{text}")
                     except Exception:
@@ -158,6 +158,7 @@ ACTIONS = [
     app_commands.Choice(name="view", value="view"),
     app_commands.Choice(name="delete", value="delete"),
     app_commands.Choice(name="edit", value="edit"),
+    app_commands.Choice(name="viewall", value="viewall"),
 ]
 
 @app_commands.command(name="cumpleaños", description="Gestiona tu cumpleaños en este servidor: add/view/delete/edit")
@@ -192,7 +193,7 @@ async def cumple_command(
         except Exception:
             await interaction.followup.send("Formato inválido. Usa `DD-MM` (ej: 11-12).", ephemeral=True)
             return
-        await cog.add_birthday(interaction.guild.id, interaction.user.id, dt.isoformat())
+        await cog.add_birthday(interaction.guild.id, interaction.user.id, dt.strftime(DATE_FORMAT))
         await interaction.followup.send(f"✅ Tu cumpleaños ha sido guardado como `{dt.strftime(DATE_FORMAT)}` en este servidor.", ephemeral=True)
         return
 
@@ -225,8 +226,33 @@ async def cumple_command(
         except Exception:
             await interaction.followup.send("Formato inválido para `new_fecha`. Usa `DD-MM`.", ephemeral=True)
             return
-        await cog.add_birthday(interaction.guild.id, interaction.user.id, ndt.isoformat())
+        await cog.add_birthday(interaction.guild.id, interaction.user.id, ndt.strftime(DATE_FORMAT))
         await interaction.followup.send(f"✅ Tu cumpleaños ha sido actualizado a `{ndt.strftime(DATE_FORMAT)}` en este servidor.", ephemeral=True)
+        return
+
+    # VIEWALL (solo administradores)
+    if act == "viewall":
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.followup.send("Necesitas permisos de administrador para usar esta opción.", ephemeral=True)
+            return
+
+        gid = str(interaction.guild.id)
+        # leer de forma segura
+        async with cog._lock:
+            guild_data = cog.data.get(gid, {})
+            birthdays = guild_data.get("birthdays", [])
+
+        if not birthdays:
+            await interaction.followup.send("No hay cumpleaños registrados en este servidor.", ephemeral=True)
+            return
+
+        lines = []
+        for b in birthdays:
+            # fecha almacenada en formato DD-MM
+            lines.append(f"<@{b['user_id']}> — `{b.get('date')}`")
+
+        text = "\n".join(lines)
+        await interaction.followup.send(f"Cumpleaños en este servidor:\n{text}", ephemeral=True)
         return
 
     await interaction.followup.send("Acción no reconocida.", ephemeral=True)

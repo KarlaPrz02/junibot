@@ -1,7 +1,12 @@
 {
   "589914152621834292": {
     "channel_id": null,
-    "birthdays": [],
+    "birthdays": [
+      {
+        "user_id": 377865994250616843,
+        "date": "03-06"
+      }
+    ],
     "last_sent": null
   }
 }
