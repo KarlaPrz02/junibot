@@ -11,6 +11,21 @@ from typing import Optional
 TZ = ZoneInfo("Europe/Madrid")
 DATE_FORMAT = "%d-%m" 
 
+
+async def usuario_autocomplete(interaction: discord.Interaction, current: str):
+    """Autocomplete para el parámetro usuario: sugiere miembros del servidor."""
+    choices = []
+    if interaction.guild is None:
+        return choices
+    # Asegurarse de usar miembros cacheados; limitar a 25
+    for m in interaction.guild.members:
+        name = m.display_name
+        if current.lower() in name.lower() or current == "":
+            choices.append(app_commands.Choice(name=name, value=str(m.id)))
+        if len(choices) >= 25:
+            break
+    return choices
+
 DATA_FILE = "birthdays.json"  # guarda cumpleaños por servidor
 CONFIG_FILE = "config.json"   # mapa guild_id -> channel_id 
 
@@ -71,7 +86,11 @@ class Birthdays(commands.Cog):
                 async with self._lock:
                     for guild_id, gdata in list(self.data.items()):
                         # prefer channel from config.json, fallback to gdata["channel_id"]
-                        cfg_channel = self.config.get(str(guild_id))
+                        cfg_channel = None
+                        if guild_id in self.config:
+                            guild_config = self.config[guild_id]
+                            if isinstance(guild_config, dict):
+                                cfg_channel = guild_config.get("birthdays")
                         channel_id = cfg_channel or gdata.get("channel_id")
                         if not channel_id:
                             continue
@@ -163,12 +182,14 @@ ACTIONS = [
 
 @app_commands.command(name="cumpleaños", description="Gestiona tu cumpleaños en este servidor: add/view/delete/edit")
 @app_commands.choices(action=ACTIONS)
-@app_commands.describe(action="Acción a realizar", fecha="Fecha (DD-MM) — para add", new_fecha="Nueva fecha (DD-MM) — para edit")
+@app_commands.describe(action="Acción a realizar", fecha="Fecha (DD-MM) — para add", new_fecha="Nueva fecha (DD-MM) — para edit", usuario="Usuario objetivo (solo admins)")
+@app_commands.autocomplete(usuario=usuario_autocomplete)
 async def cumple_command(
     interaction: discord.Interaction,
     action: app_commands.Choice[str],
     fecha: Optional[str] = None,
     new_fecha: Optional[str] = None,
+    usuario: Optional[str] = None,
 ):
     await interaction.response.defer(ephemeral=True)
     cog: Birthdays = interaction.client.get_cog("Birthdays")
@@ -183,6 +204,25 @@ async def cumple_command(
         await interaction.followup.send("Este comando solo funciona en servidores.", ephemeral=True)
         return
 
+    # resolver objetivo (por defecto el propio usuario)
+    if usuario is not None:
+        try:
+            target_id = int(usuario)
+        except Exception:
+            await interaction.followup.send("Usuario objetivo inválido.", ephemeral=True)
+            return
+    else:
+        target_id = interaction.user.id
+
+    # si se especificó un objetivo distinto, comprobar permisos de admin
+    if target_id != interaction.user.id and not interaction.user.guild_permissions.administrator:
+        await interaction.followup.send("No tienes permisos para gestionar cumpleaños de otros usuarios.", ephemeral=True)
+        return
+
+    # intentar resolver objeto Member para menciones
+    target_member_obj = interaction.guild.get_member(target_id) if interaction.guild else None
+    target_mention = target_member_obj.mention if target_member_obj is not None else f"<@{target_id}>"
+
     # ADD
     if act == "add":
         if not fecha:
@@ -193,27 +233,36 @@ async def cumple_command(
         except Exception:
             await interaction.followup.send("Formato inválido. Usa `DD-MM` (ej: 11-12).", ephemeral=True)
             return
-        await cog.add_birthday(interaction.guild.id, interaction.user.id, dt.strftime(DATE_FORMAT))
-        await interaction.followup.send(f"✅ Tu cumpleaños ha sido guardado como `{dt.strftime(DATE_FORMAT)}` en este servidor.", ephemeral=True)
+        await cog.add_birthday(interaction.guild.id, target_id, dt.strftime(DATE_FORMAT))
+        if target_id == interaction.user.id:
+            await interaction.followup.send(f"✅ Tu cumpleaños ha sido guardado como `{dt.strftime(DATE_FORMAT)}` en este servidor.", ephemeral=True)
+        else:
+            await interaction.followup.send(f"✅ Cumpleaños de {target_mention} guardado como `{dt.strftime(DATE_FORMAT)}`.", ephemeral=True)
         return
 
     # VIEW
     if act == "view":
-        items = await cog.list_user(interaction.guild.id, interaction.user.id)
+        items = await cog.list_user(interaction.guild.id, target_id)
         if not items:
-            await interaction.followup.send("No tienes un cumpleaños guardado en este servidor.", ephemeral=True)
+            await interaction.followup.send("No hay cumpleaños guardados para ese usuario en este servidor.", ephemeral=True)
             return
         lines = [f"`{i['date']}`" for i in items]
-        await interaction.followup.send("Tus cumpleaños guardados: " + ", ".join(lines), ephemeral=True)
+        if target_id == interaction.user.id:
+            await interaction.followup.send("Tus cumpleaños guardados: " + ", ".join(lines), ephemeral=True)
+        else:
+            await interaction.followup.send(f"Cumpleaños de {target_mention}: " + ", ".join(lines), ephemeral=True)
         return
 
     # DELETE
     if act == "delete":
-        ok = await cog.remove_birthday(interaction.guild.id, interaction.user.id)
+        ok = await cog.remove_birthday(interaction.guild.id, target_id)
         if ok:
-            await interaction.followup.send("✅ Tu cumpleaños ha sido eliminado para este servidor.", ephemeral=True)
+            if target_id == interaction.user.id:
+                await interaction.followup.send("✅ Tu cumpleaños ha sido eliminado para este servidor.", ephemeral=True)
+            else:
+                await interaction.followup.send(f"✅ Cumpleaños de {target_mention} eliminado.", ephemeral=True)
         else:
-            await interaction.followup.send("No se encontró un cumpleaños tuyo en este servidor.", ephemeral=True)
+            await interaction.followup.send("No se encontró un cumpleaños para ese usuario en este servidor.", ephemeral=True)
         return
 
     # EDIT
@@ -226,8 +275,11 @@ async def cumple_command(
         except Exception:
             await interaction.followup.send("Formato inválido para `new_fecha`. Usa `DD-MM`.", ephemeral=True)
             return
-        await cog.add_birthday(interaction.guild.id, interaction.user.id, ndt.strftime(DATE_FORMAT))
-        await interaction.followup.send(f"✅ Tu cumpleaños ha sido actualizado a `{ndt.strftime(DATE_FORMAT)}` en este servidor.", ephemeral=True)
+        await cog.add_birthday(interaction.guild.id, target_id, ndt.strftime(DATE_FORMAT))
+        if target_id == interaction.user.id:
+            await interaction.followup.send(f"✅ Tu cumpleaños ha sido actualizado a `{ndt.strftime(DATE_FORMAT)}` en este servidor.", ephemeral=True)
+        else:
+            await interaction.followup.send(f"✅ Cumpleaños de {target_mention} actualizado a `{ndt.strftime(DATE_FORMAT)}`.", ephemeral=True)
         return
 
     # VIEWALL (solo administradores)
@@ -246,10 +298,38 @@ async def cumple_command(
             await interaction.followup.send("No hay cumpleaños registrados en este servidor.", ephemeral=True)
             return
 
-        lines = []
+        # Agrupar por mes y ordenar por día dentro de cada mes
+        from collections import defaultdict
+        meses = [
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ]
+        groups = defaultdict(list)
         for b in birthdays:
-            # fecha almacenada en formato DD-MM
-            lines.append(f"<@{b['user_id']}> — `{b.get('date')}`")
+            date_str = b.get("date", "")
+            try:
+                d = datetime.strptime(date_str, DATE_FORMAT)
+                month = d.month
+                day = d.day
+            except Exception:
+                parts = date_str.split("-")
+                if len(parts) >= 2:
+                    try:
+                        day = int(parts[0])
+                        month = int(parts[1])
+                    except Exception:
+                        continue
+                else:
+                    continue
+            groups[month].append((day, b["user_id"], date_str))
+
+        lines = []
+        for m in range(1, 13):
+            if m in groups:
+                groups[m].sort(key=lambda x: x[0])
+                lines.append(f"**{meses[m-1]}**")
+                for day, uid, date_str in groups[m]:
+                    lines.append(f"{day:02d}-{m:02d} — <@{uid}>")
 
         text = "\n".join(lines)
         await interaction.followup.send(f"Cumpleaños en este servidor:\n{text}", ephemeral=True)

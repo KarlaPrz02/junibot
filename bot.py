@@ -43,6 +43,11 @@ async def on_ready():
     except Exception as e:
         print("Error cargando birthdays:", e)
 
+    try:
+        await bot.load_extension("cogs.join_left")
+    except Exception as e:
+        print("Error cargando join_left:", e)
+
     cargar_stats()
     cargar_palabras()
 
@@ -564,6 +569,6 @@ async def historial_slash(interaction: discord.Interaction):
 
 
 
-bot.run("your_token_here")
+bot.run("YOUR_BOT_TOKEN")
 
 
