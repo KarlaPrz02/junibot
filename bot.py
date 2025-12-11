@@ -31,9 +31,21 @@ intents.presences = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# cargar reminders cog
+# bot.load_extension("cogs.reminders")
+
 @bot.event
 async def on_ready():
-    
+    try:
+        await bot.load_extension("cogs.reminders")
+    except Exception as e:
+        print("Error cargando reminders:", e)
+
+    try:
+        await bot.load_extension("cogs.birthdays")
+    except Exception as e:
+        print("Error cargando birthdays:", e)
+
     cargar_stats()
     cargar_palabras()
 
@@ -148,13 +160,15 @@ class HelpView(discord.ui.View):
         )
         embed.add_field(name="/juni", value="Menciona a Juni.", inline=False)
         embed.add_field(name="/help", value="Este menú de ayuda.", inline=False)
+        embed.add_field(name="/cumpleaños ``[add/view/delete/edit]``", value="Gestiona los cumpleaños.", inline=False)
+        embed.add_field(name="/recordatorio ``[add/view/delete]``", value="Gestiona recordatorios.", inline=False)
         embed.add_field(name="/estado imagen", value="Muestra los estados de Juni.", inline=False)
         embed.add_field(name="/estado actual", value="Muestra un estado aleatorio de Juni.", inline=False)
         embed.add_field(name="/carla imagen", value="Muestra los estados de Carla.", inline=False)
         embed.add_field(name="/carla actual", value="Muestra un estado aleatorio de Carla.", inline=False)
         embed.set_footer(text="Desarrollado por KatPrz02")
         await interaction.message.edit(embed=embed, view=self)
-        await interaction.response.defer()  # evita el error "This interaction has already been responded to"
+        await interaction.response.defer() 
 
     @button(label="Ayuda Wordle", style=discord.ButtonStyle.success, custom_id="help_wordle")
     async def wordle(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -553,6 +567,6 @@ async def historial_slash(interaction: discord.Interaction):
 
 
 
-bot.run("DISCORD_TOKEN")
+bot.run("YOUR_BOT_TOKEN_HERE")
 
 
