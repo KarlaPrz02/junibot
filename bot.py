@@ -31,9 +31,6 @@ intents.presences = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# cargar reminders cog
-# bot.load_extension("cogs.reminders")
-
 @bot.event
 async def on_ready():
     try:
@@ -567,6 +564,6 @@ async def historial_slash(interaction: discord.Interaction):
 
 
 
-bot.run("YOUR_BOT_TOKEN_HERE")
+bot.run("your_token_here")
 
 
