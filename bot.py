@@ -187,6 +187,24 @@ class HelpView(discord.ui.View):
         embed.set_footer(text="Desarrollado por KatPrz02")
         await interaction.message.edit(embed=embed, view=self)
         await interaction.response.defer()
+        
+    @button(label="Ayuda recordatorios", style=discord.ButtonStyle.secondary, custom_id="help_recordatorio")
+    async def recordatorio(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title="Ayuda Recordatorios",
+            description="Guía para utilizar el comando recordatorios:",
+            color=discord.Color.light_gray()
+        )
+        embed.add_field(name="¿Para que sirve?", value="Sirve para guardar un recodatorio y seleccionar cuando quieres que el bot te lo recuerde.", inline=False)
+        embed.add_field(name="Uso General", value="/recordatorio ``[add/view/edit/delete]``", inline=False)
+        embed.add_field(name="Uso Add", value="/recordatorio add ``[fecha]`` ``[texto]``", inline=False)
+        embed.add_field(name="Uso View", value="/recordatorio view", inline=False)
+        embed.add_field(name="Uso Delete", value="/recordatorio delete ``[id]``", inline=False)
+        embed.add_field(name="Uso Edit", value="/recordatorio edit ``[id]`` ``[fecha]`` ``[texto]``", inline=False)
+        embed.add_field(name="Uso rapido", value="/recordatorio add - A continuación, el bot abrirá un menu para elegir la fecha y el texto.", inline=False)
+        embed.set_footer(text="Desarrollado por KatPrz02")
+        await interaction.message.edit(embed=embed, view=self)
+        await interaction.response.defer()
 
 @bot.tree.command(name="help", description="Muestra información sobre el bot")
 async def help_slash(interaction: discord.Interaction):

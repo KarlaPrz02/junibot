@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import discord
 from discord import app_commands
@@ -74,7 +74,28 @@ class Reminders(commands.Cog):
                         if due.tzinfo is None:
                             due = due.replace(tzinfo=TZ)
                         if due <= now:
-                            to_send.append(r)
+                            # Determine recurrence behavior
+                            repeat = r.get("repeat", "once")
+                            interval = int(r.get("interval", 1) or 1)
+                            if repeat == "once":
+                                # one-time reminder: send and do not reschedule
+                                to_send.append(r)
+                            else:
+                                # recurring: compute next due date
+                                if repeat == "daily":
+                                    step = timedelta(days=1)
+                                else:
+                                    # custom uses 'interval' days
+                                    step = timedelta(days=interval)
+                                next_due = due + step
+                                # if missed many occurrences, fast-forward to next future
+                                while next_due <= now:
+                                    next_due += step
+                                # update the reminder time and keep
+                                new_r = dict(r)
+                                new_r["time"] = next_due.isoformat()
+                                remaining.append(new_r)
+                                to_send.append(r)
                         else:
                             remaining.append(r)
                     if to_send:
@@ -108,6 +129,8 @@ class Reminders(commands.Cog):
             "guild_id": guild_id,
             "time": time_dt.isoformat(),
             "message": message,
+            "repeat": "once",
+            "interval": 1,
             "created_at": datetime.now(TZ).isoformat()
         }
         async with self._lock:
@@ -138,13 +161,92 @@ ACTIONS = [
     app_commands.Choice(name="delete", value="delete"),
 ]
 
+# repeat choices: once (one-shot), daily, custom (interval days)
+REPEAT_CHOICES = [
+    app_commands.Choice(name="once", value="once"),
+    app_commands.Choice(name="daily", value="daily"),
+    app_commands.Choice(name="custom", value="custom"),
+]
+
+
+# UI: Modal + Button view for creating reminders interactively
+class ReminderModal(discord.ui.Modal):
+    def __init__(self, cog: Reminders, opener_id: int, channel_id: Optional[int]):
+        super().__init__(title="Crear recordatorio")
+        self.cog = cog
+        self.opener_id = opener_id
+        self.channel_id = channel_id
+        # inputs: fecha, texto, repeat, intervalo
+        self.add_item(discord.ui.TextInput(label="Fecha (DD-MM-YYYY HH:MM)", placeholder="11-12-2025 14:30", style=discord.TextStyle.short))
+        self.add_item(discord.ui.TextInput(label="Texto del recordatorio", style=discord.TextStyle.paragraph))
+        self.add_item(discord.ui.TextInput(label="Repetición (once/daily/custom)", placeholder="once", style=discord.TextStyle.short))
+        self.add_item(discord.ui.TextInput(label="Intervalo en días (para custom)", placeholder="1", style=discord.TextStyle.short))
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # ensure only opener can submit
+        if interaction.user.id != self.opener_id:
+            await interaction.response.send_message("Solo quien abrió el formulario puede enviarlo.", ephemeral=True)
+            return
+        vals = [c.value.strip() for c in self.children]
+        fecha_text, texto_text, repeat_text, intervalo_text = vals[0], vals[1], vals[2].lower() or "once", vals[3] or "1"
+        try:
+            dt = parse_datetime(fecha_text)
+        except Exception:
+            await interaction.response.send_message("Formato de fecha inválido. Usa `DD-MM-YYYY HH:MM`.", ephemeral=True)
+            return
+        now = datetime.now(TZ)
+        if dt <= now:
+            await interaction.response.send_message("La fecha debe ser en el futuro.", ephemeral=True)
+            return
+        if repeat_text not in ("once", "daily", "custom"):
+            await interaction.response.send_message("Repetición inválida. Usa once/daily/custom.", ephemeral=True)
+            return
+        try:
+            interval = int(intervalo_text)
+        except Exception:
+            interval = 1
+        if repeat_text == "custom" and interval < 1:
+            await interaction.response.send_message("Intervalo inválido. Debe ser >= 1.", ephemeral=True)
+            return
+
+        guild_id = getattr(interaction.guild, "id", None)
+        # create reminder (use provided channel if available)
+        r = await self.cog.add_reminder(interaction.user.id, self.channel_id, dt, texto_text, guild_id)
+        async with self.cog._lock:
+            for item in self.cog.reminders:
+                if item["id"] == r["id"]:
+                    item["repeat"] = repeat_text
+                    item["interval"] = interval
+                    break
+            _save_reminders(self.cog.reminders)
+
+        await interaction.response.send_message(f"Recordatorio creado (id: `{r['id']}`) para {dt.strftime(DATE_FORMAT)}. Repetición: {repeat_text}", ephemeral=True)
+
+
+class ReminderButtonView(discord.ui.View):
+    def __init__(self, cog: Reminders, opener_id: int, timeout: Optional[float] = 180.0):
+        super().__init__(timeout=timeout)
+        self.cog = cog
+        self.opener_id = opener_id
+
+    @discord.ui.button(label="Abrir formulario", style=discord.ButtonStyle.primary)
+    async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.opener_id:
+            await interaction.response.send_message("Solo quien inició puede usar este botón.", ephemeral=True)
+            return
+        # prefer the current channel for delivering the reminder
+        ch_id = interaction.channel.id if interaction.channel else None
+        modal = ReminderModal(self.cog, self.opener_id, ch_id)
+        await interaction.response.send_modal(modal)
 @app_commands.command(name="recordatorio", description="Gestiona recordatorios: add/view/delete")
-@app_commands.choices(action=ACTIONS)
+@app_commands.choices(action=ACTIONS, repeat=REPEAT_CHOICES)
 @app_commands.describe(
     action="Acción a realizar",
     fecha="Fecha y hora (DD-MM-YYYY HH:MM) — para add",
     texto="Texto del recordatorio — para add",
-    id="ID del recordatorio — para delete"
+    id="ID del recordatorio — para delete",
+    repeat="Tipo de repetición: once/daily/custom — para add",
+    intervalo="Intervalo en días para custom — para add"
 )
 async def recordatorio_command(
     interaction: discord.Interaction,
@@ -152,6 +254,8 @@ async def recordatorio_command(
     fecha: Optional[str] = None,
     texto: Optional[str] = None,
     id: Optional[str] = None,
+    repeat: Optional[app_commands.Choice[str]] = None,
+    intervalo: Optional[int] = None,
 ):
     await interaction.response.defer(ephemeral=True)
     cog: Reminders = interaction.client.get_cog("Reminders")
@@ -163,8 +267,10 @@ async def recordatorio_command(
 
     # ADD
     if act == "add":
+        # si no se pasan fecha/texto por parámetros, abrir modal mediante botón
         if not fecha or not texto:
-            await interaction.followup.send("Debes indicar `fecha` (DD-MM-YYYY HH:MM) y `texto` para crear un recordatorio.", ephemeral=True)
+            view = ReminderButtonView(cog, interaction.user.id)
+            await interaction.followup.send("Pulsa el botón para abrir el formulario de creación de recordatorio:", view=view, ephemeral=True)
             return
         try:
             dt = parse_datetime(fecha)
@@ -175,10 +281,27 @@ async def recordatorio_command(
         if dt <= now:
             await interaction.followup.send("La fecha debe ser en el futuro.", ephemeral=True)
             return
+        # handle repetition
+        rtype = (repeat.value if repeat else "once")
+        interval = int(intervalo) if intervalo is not None else 1
+        if rtype not in ("once", "daily", "custom"):
+            await interaction.followup.send("Tipo de repetición inválido. Usa once/daily/custom.", ephemeral=True)
+            return
+        if rtype == "custom" and interval < 1:
+            await interaction.followup.send("Intervalo inválido. Debe ser un número entero de días >= 1.", ephemeral=True)
+            return
         guild_id = getattr(interaction.guild, "id", None)
         channel_id = interaction.channel.id if interaction.channel else None
         r = await cog.add_reminder(interaction.user.id, channel_id, dt, texto, guild_id)
-        await interaction.followup.send(f"Recordatorio creado (id: `{r['id']}`) para {dt.strftime(DATE_FORMAT)}.", ephemeral=True)
+        # update repeat fields after creation (thread-safe)
+        async with cog._lock:
+            for item in cog.reminders:
+                if item["id"] == r["id"]:
+                    item["repeat"] = rtype
+                    item["interval"] = interval
+                    break
+            _save_reminders(cog.reminders)
+        await interaction.followup.send(f"Recordatorio creado (id: `{r['id']}`) para {dt.strftime(DATE_FORMAT)}. Repetición: {rtype}{(' cada '+str(interval)+' días') if rtype=='custom' else ''}", ephemeral=True)
         return
 
     # VIEW
@@ -191,7 +314,10 @@ async def recordatorio_command(
         for r in items:
             dt = datetime.fromisoformat(r["time"]).astimezone(TZ)
             ch = f"<#{r['channel_id']}>" if r.get("channel_id") else "DM"
-            lines.append(f"`{r['id']}` — {dt.strftime(DATE_FORMAT)} — {ch} — {r['message']}")
+            rtype = r.get("repeat", "once")
+            interval = int(r.get("interval", 1) or 1)
+            rep_text = rtype if rtype != "custom" else f"custom every {interval}d"
+            lines.append(f"`{r['id']}` — {dt.strftime(DATE_FORMAT)} — {ch} — {r['message']} — {rep_text}")
         text = "\n".join(lines)
         await interaction.followup.send(f"Tus recordatorios:\n{text}", ephemeral=True)
         return
