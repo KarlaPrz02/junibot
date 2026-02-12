@@ -48,6 +48,11 @@ async def on_ready():
     except Exception as e:
         print("Error cargando join_left:", e)
 
+    try:
+        await bot.load_extension("cogs.reactions")
+    except Exception as e:
+        print("Error cargando reactions:", e)
+
     cargar_stats()
     cargar_palabras()
 
@@ -168,6 +173,7 @@ class HelpView(discord.ui.View):
         embed.add_field(name="/estado actual", value="Muestra un estado aleatorio de Juni.", inline=False)
         embed.add_field(name="/carla imagen", value="Muestra los estados de Carla.", inline=False)
         embed.add_field(name="/carla actual", value="Muestra un estado aleatorio de Carla.", inline=False)
+        embed.add_field(name="/reaccion ``[agregar/eliminar/list/limpiar]``", value="Gestiona reacciones para asignar roles.", inline=False)
         embed.set_footer(text="Desarrollado por KatPrz02")
         await interaction.message.edit(embed=embed, view=self)
         await interaction.response.defer() 
@@ -202,6 +208,24 @@ class HelpView(discord.ui.View):
         embed.add_field(name="Uso Delete", value="/recordatorio delete ``[id]``", inline=False)
         embed.add_field(name="Uso Edit", value="/recordatorio edit ``[id]`` ``[fecha]`` ``[texto]``", inline=False)
         embed.add_field(name="Uso rapido", value="/recordatorio add - A continuación, el bot abrirá un menu para elegir la fecha y el texto.", inline=False)
+        embed.set_footer(text="Desarrollado por KatPrz02")
+        await interaction.message.edit(embed=embed, view=self)
+        await interaction.response.defer()
+    
+    @button(label="Ayuda Reacciones", style=discord.ButtonStyle.danger, custom_id="help_reacciones")
+    async def reacciones(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title="Ayuda Reacciones",
+            description="Guía para utilizar el sistema de reacciones para asignar roles:",
+            color=discord.Color.red()
+        )
+        embed.add_field(name="¿Para qué sirve?", value="Permite que usuarios obtengan roles automáticamente al reaccionar con emojis en un mensaje.", inline=False)
+        embed.add_field(name="Uso General", value="/reaccion ``[agregar/eliminar/list/limpiar]``", inline=False)
+        embed.add_field(name="Agregar reacción", value="/reaccion agregar ``[mensaje_id]`` ``[emoji]`` ``[rol]``\n• mensaje_id: ID del mensaje donde se ponen las reacciones\n• emoji: El emoji a usar (ej: ❤️, 🎮)\n• rol: El rol a asignar", inline=False)
+        embed.add_field(name="Eliminar reacción", value="/reaccion eliminar ``[mensaje_id]`` ``[emoji]``\nEliminará ese emoji del mensaje y la configuración.", inline=False)
+        embed.add_field(name="Listar reacciones", value="/reaccion list\nMuestra todas las reacciones configuradas en el servidor.", inline=False)
+        embed.add_field(name="Limpiar mensaje", value="/reaccion limpiar ``[mensaje_id]``\nBorra toda la configuración de reacciones de un mensaje.", inline=False)
+        embed.add_field(name="Obtener ID del mensaje", value="Haz clic derecho en el mensaje → Copiar ID del mensaje (necesita Modo Desarrollador activado).", inline=False)
         embed.set_footer(text="Desarrollado por KatPrz02")
         await interaction.message.edit(embed=embed, view=self)
         await interaction.response.defer()
@@ -587,6 +611,6 @@ async def historial_slash(interaction: discord.Interaction):
 
 
 
-bot.run("YOUR_BOT_TOKEN")
+bot.run("YOUR_TOKEN_HERE")
 
 
