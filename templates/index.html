@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Crucigrama Web</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #0f172a;
+      --panel: #f8fafc;
+      --border: #e2e8f0;
+      --muted: #64748b;
+      --primary: #3b82f6;
+      --secondary: #64748b;
+      --shadow: rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font-family: Inter, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; padding: 2rem; }
+    .container { width: min(100%, 64rem); max-width: 95vw; background: var(--panel); border: 1px solid var(--border); border-radius: 0.75rem; box-shadow: 0 10px 35px var(--shadow); padding: 1.2rem 1.2rem 1.55rem; }
+    h1 { margin: 0 0 0.4rem; font-size: 1.8rem; font-weight: 700; }
+    .subtitle { margin: 0 0 1rem; color: var(--muted); font-size: 0.95rem; }
+    .message { background: #e0f2fe; border: 1px solid #bae6fd; color: #0c4a6e; border-radius: 0.5rem; padding: 0.7rem 0.9rem; margin-bottom: 1rem; }
+    .status { color: var(--muted); margin-top: 0.7rem; font-size: 0.9rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.45rem; }
+    .board-grid {
+      margin: 0.75rem auto;
+      border: 2px solid #94a3b8;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: repeat({{ grid_cols }}, minmax(0, 1fr));
+      gap: 1px;
+      width: fit-content;
+      max-width: min(95vw, 80rem);
+      padding: 0.25rem;
+      background: #e2e8f0;
+    }
+    .grid-row { display: contents; }
+    .grid-cell { width: min(2.4rem, calc((100vw - 4rem) / {{ grid_cols }})); height: min(2.4rem, calc((100vw - 4rem) / {{ grid_cols }})); border: 1px solid #475569; position: relative; display: flex; align-items: center; justify-content: center; background: #ffffff; font-weight: 700; color: #0f172a; font-size: min(0.85rem, calc((100vw - 4rem) / {{ grid_cols }} / 2)); transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease; }
+    .grid-cell.filled { background: #f8fafc; }
+    .grid-cell.hidden.filled { background: #e2e8f0; color: transparent; }
+    .grid-cell.hidden.filled.has-content { color: #0f172a; }
+    .grid-cell.revealed.filled { background: #bbf7d0; color: #0f172a; }
+    .grid-cell.revealed.correct { background: #16a34a !important; color: #ffffff !important; border-color: #16a34a !important; }
+    .grid-cell.empty { border: 1px solid #ffffff; background: #000000; }
+      .grid-cell.flash-correct {
+        animation: flash-green 1.5s cubic-bezier(0.4,0,0.2,1);
+      }
+      @keyframes flash-green {
+        0% { background: #bbf7d0; }
+        30% { background: #16a34a; color: #fff; }
+        80% { background: #16a34a; color: #fff; }
+        100% { background: #16a34a; color: #fff; }
+      }
+    .grid-cell.flip { animation: flip 0.45s ease forwards; }
+    .grid-cell.correct { background: #16a34a !important; color: white !important; border-color: #16a34a !important; }
+    .grid-cell.present { background: #f59e0b !important; color: white !important; border-color: #f59e0b !important; }
+    .grid-cell.absent { background: #64748b !important; color: white !important; border-color: #475569 !important; }
+
+    @keyframes flip {
+      0% { transform: rotateX(0deg); }
+      50% { transform: rotateX(90deg); }
+      100% { transform: rotateX(0deg); }
+    }
+    .grid-cell .cell-number { position: absolute; top: 0.08rem; left: 0.1rem; font-size: 0.5rem; line-height: 1; color: #475569; z-index: 0; }
+    .grid-cell .cell-letter { z-index: 1; text-transform: uppercase; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+    .grid-cell.selected { border: 2px solid #3b82f6; }
+    .grid-cell.selected .cell-letter { color: #0f172a; }
+    .cell-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; outline: none; text-align: center; font-weight: 700; color: #0f172a; background: transparent; text-transform: uppercase; font-family: inherit; caret-color: transparent; padding: 0; margin: 0; font-size: inherit; z-index: 2; }    .clue-item { cursor: pointer; transition: background 0.15s ease; }
+    .clue-item:hover { background: #e0f2fe; }
+    .clue-item.active { background: #bfdbfe; }
+    pre { background: #e2e8f0; border: 1px solid #cbd5e1; border-radius: 0.65rem; color: #0f172a; padding: 1rem; overflow-x: auto; font-size: 0.95rem; margin: 0.5rem 0; }
+    ul { margin: 0.45rem 0 0 1rem; padding: 0; color: #0f172a; }
+    li { margin-bottom: 0.4rem; }
+    .controls { display: grid; gap: 0.75rem; margin-top: 0.9rem; }
+    label { font-size: 0.88rem; color: var(--muted); }
+    input[type='text'], input[type='number'] { width: 100%; padding: 0.68rem 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: white; color: #0f172a; }
+    button { width: 100%; padding: 0.74rem; border: 0; border-radius: 0.5rem; font-weight: 700; cursor: pointer; color: white; background: var(--primary); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    button:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--shadow); }
+    .link { text-decoration: none; color: var(--primary); font-weight: 600; }
+    .link:hover { text-decoration: underline; }
+    #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    #loading-overlay.hidden { display: none; }
+    .spinner { width: 2rem; height: 2rem; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="loading-overlay"><div class="spinner"></div></div>
+  <main class="container" style="display:none;" id="app-container">
+    <h1>Crucigrama</h1>
+    <p class="subtitle">Juego minimalista con enfoque en las pistas y el tablero.</p>
+    {% if message %}
+      <div class="message">{{ message }}</div>
+    {% endif %}
+
+    <div><strong>Modo:</strong> {{ crossword.form }} · {{ crossword.hint }}</div>
+    {% if time_remaining >= 0 %}
+    <div id="timer-bar" style="margin-top: 0.6rem; display: flex; align-items: center; gap: 0.6rem;">
+      <span id="timer-icon" style="font-size: 1.2rem;">⏱️</span>
+      <span id="timer-display" style="font-weight: 700; font-size: 1.1rem; font-variant-numeric: tabular-nums;"></span>
+      <div style="flex: 1; height: 0.5rem; background: #e2e8f0; border-radius: 0.25rem; overflow: hidden;">
+        <div id="timer-progress" style="height: 100%; background: #3b82f6; border-radius: 0.25rem; transition: width 1s linear;"></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <h2>Tablero</h2>
+    <div class="board-grid">
+      {% for row in board_grid %}
+        <div class="grid-row">
+          {% for cell in row %}
+            {% if cell.filled %}
+                  <div class="grid-cell filled {% if cell.revealed %}revealed correct{% else %}hidden{% endif %}{% if last_correct and cell.clues and (last_correct in cell.clues) and cell.revealed %} flash-correct{% endif %}"
+                    data-r="{{ cell.r }}" data-c="{{ cell.c }}"
+                    data-clues="{{ cell.clues|join(',') }}"
+                    data-revealed="{{ '1' if cell.revealed else '0' }}"
+                    data-letter="{{ cell.letter|upper }}">
+                {% if cell.number %}<span class="cell-number">{{ cell.number }}</span>{% endif %}
+                <span class="cell-letter"></span>
+              </div>
+            {% else %}
+              <div class="grid-cell empty" data-r="{{ cell.r }}" data-c="{{ cell.c }}"></div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <h2>Pistas</h2>
+    <div class="clue-columns" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; max-height: 25rem; overflow-y: auto;">
+      <div>
+        <h3>Horizontal</h3>
+        <ul id="clue-list-horizontal">
+          {% for clue in crossword.clues if clue.orientation == 'horizontal' %}
+            <li class="clue-item{% if solved and clue.numero in solved %} active{% endif %}" data-clue="{{ clue.numero }}">
+              {{ clue.display_num }}. {{ clue.clue }} ({{ clue.length }} letras){% if solved and clue.numero in solved %} ✅{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div>
+        <h3>Vertical</h3>
+        <ul id="clue-list-vertical">
+          {% for clue in crossword.clues if clue.orientation == 'vertical' %}
+            <li class="clue-item{% if solved and clue.numero in solved %} active{% endif %}" data-clue="{{ clue.numero }}">
+              {{ clue.display_num }}. {{ clue.clue }} ({{ clue.length }} letras){% if solved and clue.numero in solved %} ✅{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input type="hidden" id="selected-clue" value="">
+      <form id="word-input-form" action="{{ url_for('guess') }}" method="post">
+        <input type="hidden" name="numero" id="input-numero" value="">
+        <input type="hidden" name="palabra" id="input-palabra" value="">
+        <button type="submit" id="submit-word" disabled>Enviar palabra</button>
+      </form>
+      <p id="validation-message" style="font-weight: 600; color: #0b6f4b; margin: 0.4rem 0 0; min-height: 1.25rem;"></p>
+    </div>
+
+    <div class="status">
+      <p>Resueltas: {{ solved|length }} / {{ crossword.clues|length }}. Pendientes: {{ pending|join(', ') }}</p>
+      <p><a class="link" href="{{ url_for('start') }}">Reiniciar crucigrama</a></p>
+    </div>
+
+    <script>
+      const cluePositions = {{ clue_positions|tojson }};
+      const crosswordClues = {{ crossword.clues|tojson }};
+      let selectedClue = null;
+
+      // Quick-mode countdown timer
+      (function() {
+        const remaining = {{ time_remaining }};
+        if (remaining < 0) return;
+        const TOTAL = 15 * 60;
+        const display = document.getElementById('timer-display');
+        const progress = document.getElementById('timer-progress');
+        const bar = document.getElementById('timer-bar');
+        let left = remaining;
+
+        function fmt(s) {
+          const m = Math.floor(s / 60);
+          const sec = s % 60;
+          return m + ':' + (sec < 10 ? '0' : '') + sec;
+        }
+        function tick() {
+          display.textContent = fmt(left);
+          progress.style.width = (left / TOTAL * 100) + '%';
+          if (left <= 60) {
+            display.style.color = '#dc2626';
+            progress.style.background = '#dc2626';
+          }
+          if (left <= 0) {
+            display.textContent = '0:00';
+            progress.style.width = '0%';
+            document.getElementById('submit-word').disabled = true;
+            document.querySelectorAll('.grid-cell.hidden.filled').forEach(function(c) {
+              c.style.pointerEvents = 'none';
+            });
+            const msg = document.querySelector('.message') || (function() {
+              const d = document.createElement('div');
+              d.className = 'message';
+              bar.parentNode.insertBefore(d, bar);
+              return d;
+            })();
+            msg.textContent = '⏰ ¡Se acabó el tiempo!';
+            msg.style.background = '#fee2e2';
+            msg.style.borderColor = '#fca5a5';
+            msg.style.color = '#991b1b';
+            return;
+          }
+          left--;
+          setTimeout(tick, 1000);
+        }
+        tick();
+      })();
+
+      function getCell(r, c) {
+        return document.querySelector(`.grid-cell[data-r='${r}'][data-c='${c}']`);
+      }
+
+      function getClueByNumber(num) {
+        return crosswordClues.find(c => Number(c.numero) === Number(num)) || null;
+      }
+
+      function wordleFeedback(attempt, target) {
+        // Helper no-op for futuras mejoras; la validación no se aplica en tiempo real.
+        return [];
+      }
+
+      function applyWordFeedback(coords, feedback) {
+        // No aplicar colores de feedback en tiempo real para el estilo "crucigrama tradicional".
+      }
+
+      function clearWordFeedback(coords) {
+        // No aplicar ni limpiar feedback visual inmediato.
+      }
+
+      function clearActiveInputs() {
+        document.querySelectorAll('.grid-cell .cell-input').forEach(input => {
+          const cell = input.closest('.grid-cell');
+          const isRevealed = cell.dataset.revealed === '1';
+          const entered = input.value.trim().toUpperCase();
+
+          if (!isRevealed) {
+            if (entered) {
+              cell.dataset.entered = entered;
+              cell.classList.add('has-content');
+            } else {
+              delete cell.dataset.entered;
+              cell.classList.remove('has-content');
+            }
+          }
+
+          cell.removeChild(input);
+
+          let letterNode = cell.querySelector('.cell-letter');
+          if (letterNode) {
+            letterNode.style.visibility = 'visible';
+            if (isRevealed) {
+              letterNode.textContent = (cell.dataset.letter || '').toUpperCase();
+            } else {
+              letterNode.textContent = (cell.dataset.entered || '').toUpperCase();
+            }
+          }
+        });
+      }
+
+      function updateSelectedClue(newClue) {
+        selectedClue = newClue;
+        document.getElementById('selected-clue').value = newClue;
+
+        document.querySelectorAll('.clue-item').forEach(item => {
+          const clueNum = Number(item.dataset.clue);
+          item.classList.toggle('active', clueNum === newClue);
+        });
+
+        document.querySelectorAll('.grid-cell').forEach(cell => cell.classList.remove('selected'));
+        clearActiveInputs();
+
+        if (!cluePositions[selectedClue]) {
+          document.getElementById('submit-word').disabled = true;
+          return;
+        }
+
+        const coords = cluePositions[selectedClue];
+        coords.forEach(([r, c]) => {
+          const cell = getCell(r, c);
+          if (!cell || cell.dataset.revealed === '1') return;
+          cell.classList.add('selected');
+
+          const existingInput = cell.querySelector('.cell-input');
+          if (existingInput) return;
+          const input = document.createElement('input');
+          input.className = 'cell-input';
+          input.setAttribute('maxlength', '1');
+
+          const preserved = cell.dataset.entered || '';
+          input.value = preserved;
+
+          input.addEventListener('input', () => {
+            input.value = input.value.toUpperCase().replace(/[^A-ZÑÁÉÍÓÚÜ]/g, '').slice(0,1);
+            cell.dataset.entered = input.value.toUpperCase();
+            updateWordValue();
+            if (input.value) {
+              const nextCell = coordToElement(coords, r, c, true);
+              if (nextCell) {
+                const nextInput = nextCell.querySelector('.cell-input');
+                if (nextInput) nextInput.focus();
+              }
+            }
+          });
+
+          let letterNode = cell.querySelector('.cell-letter');
+          if (letterNode) letterNode.style.visibility = 'hidden';
+          cell.appendChild(input);
+        });
+
+        document.getElementById('input-numero').value = selectedClue;
+        updateWordValue();
+      }
+
+      function coordToElement(coords, r, c, next = false) {
+        const index = coords.findIndex(([rr, cc]) => rr === r && cc === c);
+        const target = (next ? index + 1 : index - 1);
+        if (target >= 0 && target < coords.length) {
+          const [nr, nc] = coords[target];
+          return getCell(nr, nc);
+        }
+        return null;
+      }
+
+      function updateWordValue() {
+        if (!selectedClue || !cluePositions[selectedClue]) return;
+        const coords = cluePositions[selectedClue];
+        let word = '';
+        let complete = true;
+
+        coords.forEach(([r, c]) => {
+          const cell = getCell(r, c);
+          if (!cell) return;
+          if (cell.dataset.revealed === '1') {
+            word += cell.dataset.letter || '';
+            return;
+          }
+          const input = cell.querySelector('.cell-input');
+          const v = input ? input.value : (cell.dataset.entered || '');
+          if (!v || v.length === 0) {
+            complete = false;
+          }
+          word += v;
+        });
+
+        document.getElementById('input-palabra').value = word;
+        const validation = document.getElementById('validation-message');
+        const clue = getClueByNumber(selectedClue);
+
+        if (word.length > 0 && clue) {
+          validation.textContent = `${word.length}/${clue.length} letras completadas`;
+          validation.style.color = '#475569';
+          if (word.length === clue.length) {
+            validation.textContent = '✅ Palabra completa, pulsa Enviar para verificar.';
+            validation.style.color = '#0b6f4b';
+          }
+        } else {
+          validation.textContent = '';
+        }
+
+        document.getElementById('submit-word').disabled = !complete;
+      }
+
+      function crosswordClueByNumber(num) {
+        const all = [
+          ...document.querySelectorAll('li.clue-item'),
+        ];
+        for (const item of all) {
+          if (Number(item.dataset.clue) === Number(num)) {
+            const text = item.textContent || '';
+            const match = text.match(/\((\d+) letras\)$/);
+            if (match) {
+              const clueText = text.replace(/^[0-9]+\.\s*/, '').replace(/\s*\(\d+ letras\)$/, '');
+              const len = Number(match[1]);
+              return {number: Number(num), clue: clueText, length: len, answer: null};
+            }
+          }
+        }
+        const cl = ({{ crossword.clues|tojson }}).find(c => c.numero === Number(num));
+        return cl || null;
+      }
+
+
+      document.querySelectorAll('.clue-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const num = Number(item.dataset.clue);
+          updateSelectedClue(num);
+        });
+      });
+
+      if (document.querySelector('.clue-item')) {
+        const first = document.querySelector('.clue-item');
+        if (first) updateSelectedClue(Number(first.dataset.clue));
+      }
+      
+      // Inicializar celulas con contenido guardado o revelado
+      document.querySelectorAll('.grid-cell.filled').forEach(cell => {
+        let letterNode = cell.querySelector('.cell-letter');
+        if (cell.dataset.revealed === '1') {
+          letterNode.textContent = (cell.dataset.letter || '').toUpperCase();
+        } else if (cell.dataset.entered) {
+          letterNode.textContent = cell.dataset.entered.toUpperCase();
+          cell.classList.add('has-content');
+        }
+      });
+    // Flash verde: elimina la clase flash-correct tras 1.5s
+    (function() {
+      const flash = document.querySelectorAll('.grid-cell.flash-correct');
+      if (flash.length > 0) {
+        setTimeout(() => {
+          flash.forEach(cell => cell.classList.remove('flash-correct'));
+        }, 1500);
+      }
+    })();
+    </script>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1/dist/index.global.js"></script>
+  <script>
+    (async function() {
+      const overlay = document.getElementById('loading-overlay');
+      const container = document.getElementById('app-container');
+      try {
+        if (window.DiscordSDK) {
+          const sdk = new window.DiscordSDK('{{ discord_client_id }}');
+          await sdk.ready();
+        }
+      } catch(e) {
+        console.log('Discord SDK not available (running outside Discord):', e);
+      }
+      overlay.classList.add('hidden');
+      container.style.display = '';
+    })();
+  </script>
+</body>
+</html>

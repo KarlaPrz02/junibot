@@ -1,0 +1,2018 @@
+[
+  {
+    "clue": "Planeta conocido como el planeta rojo",
+    "answer": "marte"
+  },
+  {
+    "clue": "Animal doméstico que ladra",
+    "answer": "perro"
+  },
+  {
+    "clue": "Lugar donde estudias o trabajas",
+    "answer": "escuela"
+  },
+  {
+    "clue": "Lo contrario de día",
+    "answer": "noche"
+  },
+  {
+    "clue": "Estación del año con calor y sol",
+    "answer": "verano"
+  },
+  {
+    "clue": "Capital de Francia",
+    "answer": "paris"
+  },
+  {
+    "clue": "Color del cielo claro",
+    "answer": "azul"
+  },
+  {
+    "clue": "Comida redonda con queso y tomate",
+    "answer": "pizza"
+  },
+  {
+    "clue": "Día de la semana después de lunes",
+    "answer": "martes"
+  },
+  {
+    "clue": "Lugar donde duermes",
+    "answer": "cama"
+  },
+  {
+    "clue": "Animal que maúlla",
+    "answer": "gato"
+  },
+  {
+    "clue": "Estrella del sistema solar",
+    "answer": "sol"
+  },
+  {
+    "clue": "Satélite de la Tierra",
+    "answer": "luna"
+  },
+  {
+    "clue": "Planta grande con tronco",
+    "answer": "arbol"
+  },
+  {
+    "clue": "Masa de agua salada",
+    "answer": "mar"
+  },
+  {
+    "clue": "Corriente de agua",
+    "answer": "rio"
+  },
+  {
+    "clue": "Tierra rodeada de agua",
+    "answer": "isla"
+  },
+  {
+    "clue": "Lo que ves sobre ti",
+    "answer": "cielo"
+  },
+  {
+    "clue": "Vehiculo que vuela en el aire",
+    "answer": "avion"
+  },
+  {
+    "clue": "Transporte sobre rieles",
+    "answer": "tren"
+  },
+  {
+    "clue": "Vehiculo de dos ruedas con motor",
+    "answer": "moto"
+  },
+  {
+    "clue": "Vehiculo con ruedas para carretera",
+    "answer": "carro"
+  },
+  {
+    "clue": "Agua que cae del cielo",
+    "answer": "lluvia"
+  },
+  {
+    "clue": "Masa de vapor en el cielo",
+    "answer": "nube"
+  },
+  {
+    "clue": "Aire en movimiento",
+    "answer": "viento"
+  },
+  {
+    "clue": "Agua congelada que cae del cielo",
+    "answer": "nieve"
+  },
+  {
+    "clue": "Temperatura baja",
+    "answer": "frio"
+  },
+  {
+    "clue": "Temperatura alta",
+    "answer": "calor"
+  },
+  {
+    "clue": "Texto que programa un software",
+    "answer": "codigo"
+  },
+  {
+    "clue": "Actividad de entretenimiento",
+    "answer": "juego"
+  },
+  {
+    "clue": "Arte de sonidos ordenados",
+    "answer": "musica"
+  },
+  {
+    "clue": "Moverse al ritmo de musica",
+    "answer": "bailar"
+  },
+  {
+    "clue": "Deporte con balon donde anotan goles",
+    "answer": "futbol"
+  },
+  {
+    "clue": "Esfera usada en deportes",
+    "answer": "balon"
+  },
+  {
+    "clue": "Objetivo donde se marca gol",
+    "answer": "arco"
+  },
+  {
+    "clue": "Grupo de personas con misma meta",
+    "answer": "equipo"
+  },
+  {
+    "clue": "Premio de campeonato",
+    "answer": "copa"
+  },
+  {
+    "clue": "Campo de juego o de carrera",
+    "answer": "pista"
+  },
+  {
+    "clue": "Anotacion en futbol",
+    "answer": "gol"
+  },
+  {
+    "clue": "Unidad de puntuacion",
+    "answer": "punto"
+  },
+  {
+    "clue": "Conjunto de paginas impresas",
+    "answer": "libro"
+  },
+  {
+    "clue": "Relato corto de ficcion",
+    "answer": "cuento"
+  },
+  {
+    "clue": "Libro de ficcion largo",
+    "answer": "novela"
+  },
+  {
+    "clue": "Texto con ritmo y rima",
+    "answer": "poesia"
+  },
+  {
+    "clue": "Persona que actua en teatro o tv",
+    "answer": "actor"
+  },
+  {
+    "clue": "Persona que enseña",
+    "answer": "maestro"
+  },
+  {
+    "clue": "Estudiante",
+    "answer": "alumno"
+  },
+  {
+    "clue": "Sesion de enseñanza",
+    "answer": "clase"
+  },
+  {
+    "clue": "Lugar para guardar dinero",
+    "answer": "banco"
+  },
+  {
+    "clue": "Fruta roja pequeña",
+    "answer": "fresa"
+  },
+  {
+    "clue": "Animal lento con caparazon",
+    "answer": "tortuga"
+  },
+  {
+    "clue": "Color de la sangre",
+    "answer": "rojo"
+  },
+  {
+    "clue": "Color de la hierba",
+    "answer": "verde"
+  },
+  {
+    "clue": "Parte del cuerpo para ver",
+    "answer": "ojo"
+  },
+  {
+    "clue": "Parte del cuerpo para oir",
+    "answer": "oido"
+  },
+  {
+    "clue": "Organo que bombea sangre",
+    "answer": "corazon"
+  },
+  {
+    "clue": "Lo usas para pensar",
+    "answer": "mente"
+  },
+  {
+    "clue": "Extremidad para caminar",
+    "answer": "pie"
+  },
+  {
+    "clue": "Extremidad superior del cuerpo",
+    "answer": "brazo"
+  },
+  {
+    "clue": "Parte del cuerpo con dedos",
+    "answer": "mano"
+  },
+  {
+    "clue": "Lo que cubre tu cabeza",
+    "answer": "pelo"
+  },
+  {
+    "clue": "Hueso de la cabeza",
+    "answer": "craneo"
+  },
+  {
+    "clue": "Sentido para oler",
+    "answer": "nariz"
+  },
+  {
+    "clue": "Organo para hablar y comer",
+    "answer": "boca"
+  },
+  {
+    "clue": "Diente grande y afilado",
+    "answer": "colmillo"
+  },
+  {
+    "clue": "Liquido rojo del cuerpo",
+    "answer": "sangre"
+  },
+  {
+    "clue": "Donde se digiere la comida",
+    "answer": "estomago"
+  },
+  {
+    "clue": "Prenda para los pies",
+    "answer": "zapato"
+  },
+  {
+    "clue": "Prenda para la cabeza",
+    "answer": "gorra"
+  },
+  {
+    "clue": "Tela para cubrirse del frio",
+    "answer": "manta"
+  },
+  {
+    "clue": "Asiento para una persona",
+    "answer": "silla"
+  },
+  {
+    "clue": "Superficie para comer o trabajar",
+    "answer": "mesa"
+  },
+  {
+    "clue": "Entrada de una casa",
+    "answer": "puerta"
+  },
+  {
+    "clue": "Lo contrario de suelo",
+    "answer": "techo"
+  },
+  {
+    "clue": "Material transparente de ventanas",
+    "answer": "vidrio"
+  },
+  {
+    "clue": "Utensilio para cortar",
+    "answer": "tijera"
+  },
+  {
+    "clue": "Metal precioso amarillo",
+    "answer": "oro"
+  },
+  {
+    "clue": "Metal precioso blanco",
+    "answer": "plata"
+  },
+  {
+    "clue": "Piedra preciosa transparente",
+    "answer": "diamante"
+  },
+  {
+    "clue": "Mezcla de harina y agua al horno",
+    "answer": "pan"
+  },
+  {
+    "clue": "Bebida caliente de granos tostados",
+    "answer": "cafe"
+  },
+  {
+    "clue": "Bebida hecha con uvas",
+    "answer": "vino"
+  },
+  {
+    "clue": "Liquido vital para vivir",
+    "answer": "agua"
+  },
+  {
+    "clue": "Producto lacteo blanco",
+    "answer": "leche"
+  },
+  {
+    "clue": "Condimento blanco de cocina",
+    "answer": "sal"
+  },
+  {
+    "clue": "Dulce cristalizado para endulzar",
+    "answer": "azucar"
+  },
+  {
+    "clue": "Fruta tropical amarilla",
+    "answer": "mango"
+  },
+  {
+    "clue": "Fruta redonda y roja o verde",
+    "answer": "manzana"
+  },
+  {
+    "clue": "Fruta citrica amarilla",
+    "answer": "limon"
+  },
+  {
+    "clue": "Fruta naranja y redonda",
+    "answer": "naranja"
+  },
+  {
+    "clue": "Hortaliza naranja larga",
+    "answer": "zanahoria"
+  },
+  {
+    "clue": "Vegetal verde en ensaladas",
+    "answer": "lechuga"
+  },
+  {
+    "clue": "Alimento de gallina con cascara",
+    "answer": "huevo"
+  },
+  {
+    "clue": "Carne de cerdo o res",
+    "answer": "carne"
+  },
+  {
+    "clue": "Animal que vive en el agua",
+    "answer": "pez"
+  },
+  {
+    "clue": "Animal con plumas que vuela",
+    "answer": "ave"
+  },
+  {
+    "clue": "Reptil largo sin patas",
+    "answer": "serpiente"
+  },
+  {
+    "clue": "Insecto que produce miel",
+    "answer": "abeja"
+  },
+  {
+    "clue": "Insecto con alas de colores",
+    "answer": "mariposa"
+  },
+  {
+    "clue": "Animal grande de la selva con melena",
+    "answer": "leon"
+  },
+  {
+    "clue": "Animal con trompa y colmillos",
+    "answer": "elefante"
+  },
+  {
+    "clue": "Animal rayado blanco y negro",
+    "answer": "cebra"
+  },
+  {
+    "clue": "Primate similar al humano",
+    "answer": "mono"
+  },
+  {
+    "clue": "Ave nocturna grande",
+    "answer": "buho"
+  },
+  {
+    "clue": "Animal domestico que relincha",
+    "answer": "caballo"
+  },
+  {
+    "clue": "Cria de la vaca",
+    "answer": "becerro"
+  },
+  {
+    "clue": "Animal que da lana",
+    "answer": "oveja"
+  },
+  {
+    "clue": "Macho de la gallina",
+    "answer": "gallo"
+  },
+  {
+    "clue": "Hembra del toro",
+    "answer": "vaca"
+  },
+  {
+    "clue": "Animal rosado de granja",
+    "answer": "cerdo"
+  },
+  {
+    "clue": "Periodo de doce meses",
+    "answer": "ano"
+  },
+  {
+    "clue": "Periodo de siete dias",
+    "answer": "semana"
+  },
+  {
+    "clue": "Periodo de treinta dias",
+    "answer": "mes"
+  },
+  {
+    "clue": "Sesenta minutos",
+    "answer": "hora"
+  },
+  {
+    "clue": "Sesenta segundos",
+    "answer": "minuto"
+  },
+  {
+    "clue": "Lo mas corto del tiempo",
+    "answer": "segundo"
+  },
+  {
+    "clue": "Momento en que amanece",
+    "answer": "alba"
+  },
+  {
+    "clue": "Parte del dia despues de mediodia",
+    "answer": "tarde"
+  },
+  {
+    "clue": "Numero despues del uno",
+    "answer": "dos"
+  },
+  {
+    "clue": "Numero despues del dos",
+    "answer": "tres"
+  },
+  {
+    "clue": "Numero despues del tres",
+    "answer": "cuatro"
+  },
+  {
+    "clue": "Numero despues del cuatro",
+    "answer": "cinco"
+  },
+  {
+    "clue": "Numero despues del nueve",
+    "answer": "diez"
+  },
+  {
+    "clue": "Diez veces diez",
+    "answer": "cien"
+  },
+  {
+    "clue": "Diez veces cien",
+    "answer": "mil"
+  },
+  {
+    "clue": "La mitad de algo",
+    "answer": "medio"
+  },
+  {
+    "clue": "Resultado de sumar",
+    "answer": "suma"
+  },
+  {
+    "clue": "Resultado de restar",
+    "answer": "resta"
+  },
+  {
+    "clue": "Figura de cuatro lados iguales",
+    "answer": "cubo"
+  },
+  {
+    "clue": "Figura redonda",
+    "answer": "circulo"
+  },
+  {
+    "clue": "Figura de tres lados",
+    "answer": "triangulo"
+  },
+  {
+    "clue": "Linea sin curvas",
+    "answer": "recta"
+  },
+  {
+    "clue": "Continente del flamenco y la paella",
+    "answer": "europa"
+  },
+  {
+    "clue": "Pais con forma de bota",
+    "answer": "italia"
+  },
+  {
+    "clue": "Pais de la Torre Eiffel",
+    "answer": "francia"
+  },
+  {
+    "clue": "Pais del Big Ben",
+    "answer": "inglaterra"
+  },
+  {
+    "clue": "Capital de Alemania",
+    "answer": "berlin"
+  },
+  {
+    "clue": "Capital de Italia",
+    "answer": "roma"
+  },
+  {
+    "clue": "Ciudad de la Sagrada Familia",
+    "answer": "barcelona"
+  },
+  {
+    "clue": "Capital de Japon",
+    "answer": "tokio"
+  },
+  {
+    "clue": "Capital de Rusia",
+    "answer": "moscu"
+  },
+  {
+    "clue": "Capital de Portugal",
+    "answer": "lisboa"
+  },
+  {
+    "clue": "Pais sudamericano del tango",
+    "answer": "argentina"
+  },
+  {
+    "clue": "Pais con piramides antiguas",
+    "answer": "egipto"
+  },
+  {
+    "clue": "Oceano mas grande del mundo",
+    "answer": "pacifico"
+  },
+  {
+    "clue": "Desierto mas grande del mundo",
+    "answer": "sahara"
+  },
+  {
+    "clue": "Nota musical despues de fa",
+    "answer": "sol"
+  },
+  {
+    "clue": "Instrumento de cuerdas con trastes",
+    "answer": "guitarra"
+  },
+  {
+    "clue": "Instrumento de teclas blancas y negras",
+    "answer": "piano"
+  },
+  {
+    "clue": "Instrumento de viento de metal",
+    "answer": "trompeta"
+  },
+  {
+    "clue": "Instrumento de percusion redondo",
+    "answer": "tambor"
+  },
+  {
+    "clue": "Instrumento de cuerdas clasico",
+    "answer": "violin"
+  },
+  {
+    "clue": "Sonido fuerte y repentino del cielo",
+    "answer": "trueno"
+  },
+  {
+    "clue": "Destello de luz en tormenta",
+    "answer": "rayo"
+  },
+  {
+    "clue": "Lo contrario de guerra",
+    "answer": "paz"
+  },
+  {
+    "clue": "Lo contrario de odio",
+    "answer": "amor"
+  },
+  {
+    "clue": "Lo contrario de triste",
+    "answer": "feliz"
+  },
+  {
+    "clue": "Lo contrario de oscuro",
+    "answer": "claro"
+  },
+  {
+    "clue": "Lo contrario de rapido",
+    "answer": "lento"
+  },
+  {
+    "clue": "Lo contrario de grande",
+    "answer": "chico"
+  },
+  {
+    "clue": "Lo contrario de alto",
+    "answer": "bajo"
+  },
+  {
+    "clue": "Lo contrario de nuevo",
+    "answer": "viejo"
+  },
+  {
+    "clue": "Lo contrario de lleno",
+    "answer": "vacio"
+  },
+  {
+    "clue": "Lo contrario de duro",
+    "answer": "blando"
+  },
+  {
+    "clue": "Lo contrario de dulce",
+    "answer": "amargo"
+  },
+  {
+    "clue": "Lo contrario de verdad",
+    "answer": "mentira"
+  },
+  {
+    "clue": "Sentimiento al ganar",
+    "answer": "alegria"
+  },
+  {
+    "clue": "Sentimiento ante el peligro",
+    "answer": "miedo"
+  },
+  {
+    "clue": "Emocion al perder a alguien",
+    "answer": "dolor"
+  },
+  {
+    "clue": "Deseo de comer",
+    "answer": "hambre"
+  },
+  {
+    "clue": "Deseo de beber",
+    "answer": "sed"
+  },
+  {
+    "clue": "Estado de reposo nocturno",
+    "answer": "sueno"
+  },
+  {
+    "clue": "Elemento que produce llamas",
+    "answer": "fuego"
+  },
+  {
+    "clue": "Elemento que respiramos",
+    "answer": "aire"
+  },
+  {
+    "clue": "Material de las rocas",
+    "answer": "piedra"
+  },
+  {
+    "clue": "Particulas finas de roca",
+    "answer": "arena"
+  },
+  {
+    "clue": "Material de los arboles",
+    "answer": "madera"
+  },
+  {
+    "clue": "Tejido hecho con hilos",
+    "answer": "tela"
+  },
+  {
+    "clue": "Material rojo de construccion",
+    "answer": "ladrillo"
+  },
+  {
+    "clue": "Mezcla para construir paredes",
+    "answer": "cemento"
+  },
+  {
+    "clue": "Lo opuesto a derecha",
+    "answer": "izquierda"
+  },
+  {
+    "clue": "Profesion de quien cura enfermos",
+    "answer": "medico"
+  },
+  {
+    "clue": "Profesion de quien apaga incendios",
+    "answer": "bombero"
+  },
+  {
+    "clue": "Profesion de quien cocina",
+    "answer": "chef"
+  },
+  {
+    "clue": "Profesion de quien defiende en juicio",
+    "answer": "abogado"
+  },
+  {
+    "clue": "Profesion de quien pinta cuadros",
+    "answer": "pintor"
+  },
+  {
+    "clue": "Profesion de quien escribe libros",
+    "answer": "escritor"
+  },
+  {
+    "clue": "Profesion de quien vuela un avion",
+    "answer": "piloto"
+  },
+  {
+    "clue": "Lo que plantas en la tierra",
+    "answer": "semilla"
+  },
+  {
+    "clue": "Parte de la planta bajo tierra",
+    "answer": "raiz"
+  },
+  {
+    "clue": "Parte colorida de una planta",
+    "answer": "flor"
+  },
+  {
+    "clue": "Parte verde de la planta",
+    "answer": "hoja"
+  },
+  {
+    "clue": "Planta que crece en el cesped",
+    "answer": "hierba"
+  },
+  {
+    "clue": "Flor roja con espinas",
+    "answer": "rosa"
+  },
+  {
+    "clue": "Lugar con muchos arboles",
+    "answer": "bosque"
+  },
+  {
+    "clue": "Terreno seco sin vegetacion",
+    "answer": "desierto"
+  },
+  {
+    "clue": "Extension grande de agua dulce",
+    "answer": "lago"
+  },
+  {
+    "clue": "Caida de agua desde altura",
+    "answer": "cascada"
+  },
+  {
+    "clue": "Abertura en la tierra con lava",
+    "answer": "volcan"
+  },
+  {
+    "clue": "Movimiento violento de la tierra",
+    "answer": "sismo"
+  },
+  {
+    "clue": "Cuerpo celeste con cola brillante",
+    "answer": "cometa"
+  },
+  {
+    "clue": "Grupo de estrellas con forma",
+    "answer": "constelacion"
+  },
+  {
+    "clue": "Planeta con anillos",
+    "answer": "saturno"
+  },
+  {
+    "clue": "Planeta mas grande del sistema solar",
+    "answer": "jupiter"
+  },
+  {
+    "clue": "Planeta mas cercano al sol",
+    "answer": "mercurio"
+  },
+  {
+    "clue": "Tercer planeta del sistema solar",
+    "answer": "tierra"
+  },
+  {
+    "clue": "Espacio entre paredes para vivir",
+    "answer": "casa"
+  },
+  {
+    "clue": "Edificio muy alto",
+    "answer": "torre"
+  },
+  {
+    "clue": "Estructura sobre un rio",
+    "answer": "puente"
+  },
+  {
+    "clue": "Camino asfaltado para vehiculos",
+    "answer": "calle"
+  },
+  {
+    "clue": "Lugar donde compras comida",
+    "answer": "tienda"
+  },
+  {
+    "clue": "Lugar donde comes fuera de casa",
+    "answer": "restaurante"
+  },
+  {
+    "clue": "Lugar donde ves al medico",
+    "answer": "clinica"
+  },
+  {
+    "clue": "Lugar donde guardas el coche",
+    "answer": "garaje"
+  },
+  {
+    "clue": "Habitacion para cocinar",
+    "answer": "cocina"
+  },
+  {
+    "clue": "Habitacion con ducha o bañera",
+    "answer": "bano"
+  },
+  {
+    "clue": "Espacio exterior con plantas en casa",
+    "answer": "jardin"
+  },
+  {
+    "clue": "Deporte con raqueta y pelota verde",
+    "answer": "tenis"
+  },
+  {
+    "clue": "Deporte acuatico en piscina",
+    "answer": "natacion"
+  },
+  {
+    "clue": "Deporte de lanzar al aro",
+    "answer": "basquet"
+  },
+  {
+    "clue": "Deporte con guantes y ring",
+    "answer": "boxeo"
+  },
+  {
+    "clue": "Carreras a pie",
+    "answer": "atletismo"
+  },
+  {
+    "clue": "Actividad sobre una bicicleta",
+    "answer": "ciclismo"
+  },
+  {
+    "clue": "Deporte de invierno sobre tabla",
+    "answer": "snowboard"
+  },
+  {
+    "clue": "Parte del cuerpo de un ave para volar",
+    "answer": "ala"
+  },
+  {
+    "clue": "Dueño de una mascota o casa",
+    "answer": "amo"
+  },
+  {
+    "clue": "Anillo grande, círculo",
+    "answer": "aro"
+  },
+  {
+    "clue": "Parte por donde se agarra una taza",
+    "answer": "asa"
+  },
+  {
+    "clue": "Establecimiento para tomar bebidas",
+    "answer": "bar"
+  },
+  {
+    "clue": "Serpiente tropical de gran tamaño",
+    "answer": "boa"
+  },
+  {
+    "clue": "Vehículo grande de transporte público",
+    "answer": "bus"
+  },
+  {
+    "clue": "Sustancia blanca usada en construcción",
+    "answer": "cal"
+  },
+  {
+    "clue": "Sinónimo de perro",
+    "answer": "can"
+  },
+  {
+    "clue": "Verdura de hojas grandes y verdes",
+    "answer": "col"
+  },
+  {
+    "clue": "Patada de un caballo",
+    "answer": "coz"
+  },
+  {
+    "clue": "Período de 24 horas",
+    "answer": "dia"
+  },
+  {
+    "clue": "Repetición de un sonido",
+    "answer": "eco"
+  },
+  {
+    "clue": "Línea central de rotación",
+    "answer": "eje"
+  },
+  {
+    "clue": "Período largo de la historia",
+    "answer": "era"
+  },
+  {
+    "clue": "Rostro, cara",
+    "answer": "faz"
+  },
+  {
+    "clue": "Lo contrario de guapo",
+    "answer": "feo"
+  },
+  {
+    "clue": "Final, conclusión",
+    "answer": "fin"
+  },
+  {
+    "clue": "Estado de la materia como el oxígeno",
+    "answer": "gas"
+  },
+  {
+    "clue": "Manojo atado de leña o hierba",
+    "answer": "haz"
+  },
+  {
+    "clue": "Herramienta curva para segar",
+    "answer": "hoz"
+  },
+  {
+    "clue": "El día presente, ahora",
+    "answer": "hoy"
+  },
+  {
+    "clue": "Enfado muy intenso, furia",
+    "answer": "ira"
+  },
+  {
+    "clue": "Norma jurídica obligatoria",
+    "answer": "ley"
+  },
+  {
+    "clue": "Combate, pelea, batalla",
+    "answer": "lid"
+  },
+  {
+    "clue": "Lo que emite el sol y las lámparas",
+    "answer": "luz"
+  },
+  {
+    "clue": "Lo contrario de bien",
+    "answer": "mal"
+  },
+  {
+    "clue": "Adverbio: en mayor cantidad",
+    "answer": "mas"
+  },
+  {
+    "clue": "Juego de cartas español",
+    "answer": "mus"
+  },
+  {
+    "clue": "Ave palmípeda, juego de mesa",
+    "answer": "oca"
+  },
+  {
+    "clue": "Onda que se forma en el mar",
+    "answer": "ola"
+  },
+  {
+    "clue": "Hembra del oso, constelación",
+    "answer": "osa"
+  },
+  {
+    "clue": "Conjunto de dos elementos iguales",
+    "answer": "par"
+  },
+  {
+    "clue": "Pieza fina y puntiaguda de guitarra",
+    "answer": "pua"
+  },
+  {
+    "clue": "Género musical urbano con rimas",
+    "answer": "rap"
+  },
+  {
+    "clue": "Malla para pescar o de internet",
+    "answer": "red"
+  },
+  {
+    "clue": "Animal de ganado vacuno",
+    "answer": "res"
+  },
+  {
+    "clue": "Monarca, soberano de un reino",
+    "answer": "rey"
+  },
+  {
+    "clue": "Bebida alcohólica de caña de azúcar",
+    "answer": "ron"
+  },
+  {
+    "clue": "Verbo que significa existir",
+    "answer": "ser"
+  },
+  {
+    "clue": "Primera persona del verbo ser",
+    "answer": "soy"
+  },
+  {
+    "clue": "Punto cardinal opuesto al norte",
+    "answer": "sur"
+  },
+  {
+    "clue": "Antorcha, palo encendido",
+    "answer": "tea"
+  },
+  {
+    "clue": "Movimiento involuntario repetitivo",
+    "answer": "tic"
+  },
+  {
+    "clue": "Hermano del padre o la madre",
+    "answer": "tio"
+  },
+  {
+    "clue": "Expulsión brusca de aire por la boca",
+    "answer": "tos"
+  },
+  {
+    "clue": "Tela fina y transparente de velo",
+    "answer": "tul"
+  },
+  {
+    "clue": "Fruta pequeña de la vid",
+    "answer": "uva"
+  },
+  {
+    "clue": "Primer número natural",
+    "answer": "uno"
+  },
+  {
+    "clue": "Imperativo de venir: ¡...!",
+    "answer": "ven"
+  },
+  {
+    "clue": "Percibir con los ojos",
+    "answer": "ver"
+  },
+  {
+    "clue": "Ocasión, turno",
+    "answer": "vez"
+  },
+  {
+    "clue": "Planta de la que nacen las uvas",
+    "answer": "vid"
+  },
+  {
+    "clue": "Sonido que sale de la garganta",
+    "answer": "voz"
+  },
+  {
+    "clue": "Filosofía oriental de meditación",
+    "answer": "zen"
+  },
+  {
+    "clue": "Recipiente para beber vino",
+    "answer": "vas"
+  },
+  {
+    "clue": "Sonido de la campana",
+    "answer": "don"
+  },
+  {
+    "clue": "Prenda para la cabeza tipo sombrero",
+    "answer": "gorro"
+  },
+  {
+    "clue": "Número que sigue al cinco",
+    "answer": "seis"
+  },
+  {
+    "clue": "Borde, margen de algo",
+    "answer": "ras"
+  },
+  {
+    "clue": "Unidad de fuerza en física",
+    "answer": "din"
+  },
+  {
+    "clue": "Forma de jugar la pelota en tenis",
+    "answer": "set"
+  },
+  {
+    "clue": "Resina oscura para impermeabilizar",
+    "answer": "brea"
+  },
+  {
+    "clue": "Pelo corto y fino de los animales",
+    "answer": "piel"
+  },
+  {
+    "clue": "Pez de mar muy consumido en lata",
+    "answer": "atun"
+  },
+  {
+    "clue": "Espíritu, parte inmaterial de la persona",
+    "answer": "alma"
+  },
+  {
+    "clue": "Parte final de un animal, rabo",
+    "answer": "cola"
+  },
+  {
+    "clue": "Cubo pequeño con puntos para jugar",
+    "answer": "dado"
+  },
+  {
+    "clue": "Mujer noble, pieza de ajedrez",
+    "answer": "dama"
+  },
+  {
+    "clue": "Extremo de la mano, tiene uña",
+    "answer": "dedo"
+  },
+  {
+    "clue": "Torre con luz que guía a los barcos",
+    "answer": "faro"
+  },
+  {
+    "clue": "Línea de asientos o personas en orden",
+    "answer": "fila"
+  },
+  {
+    "clue": "Movimiento circular, vuelta",
+    "answer": "giro"
+  },
+  {
+    "clue": "Material elástico que se estira",
+    "answer": "goma"
+  },
+  {
+    "clue": "Pequeña porción de líquido que cae",
+    "answer": "gota"
+  },
+  {
+    "clue": "Fibra delgada para coser",
+    "answer": "hilo"
+  },
+  {
+    "clue": "Gas visible que sale del fuego",
+    "answer": "humo"
+  },
+  {
+    "clue": "Arcoíris del ojo, flor morada",
+    "answer": "iris"
+  },
+  {
+    "clue": "Persona que dirige una empresa",
+    "answer": "jefe"
+  },
+  {
+    "clue": "Fibra natural de la oveja",
+    "answer": "lana"
+  },
+  {
+    "clue": "Roca fundida que sale de un volcán",
+    "answer": "lava"
+  },
+  {
+    "clue": "Representación gráfica de un territorio",
+    "answer": "mapa"
+  },
+  {
+    "clue": "Sustancia dulce que producen las abejas",
+    "answer": "miel"
+  },
+  {
+    "clue": "Mensaje escrito breve, nota musical",
+    "answer": "nota"
+  },
+  {
+    "clue": "Número que sigue al siete",
+    "answer": "ocho"
+  },
+  {
+    "clue": "Onda, vibración que se propaga",
+    "answer": "onda"
+  },
+  {
+    "clue": "Trozo largo de madera",
+    "answer": "palo"
+  },
+  {
+    "clue": "Extremidad de un animal",
+    "answer": "pata"
+  },
+  {
+    "clue": "Anfibio verde que salta y croa",
+    "answer": "rana"
+  },
+  {
+    "clue": "Ciervo de la tundra con grandes astas",
+    "answer": "reno"
+  },
+  {
+    "clue": "Expresión de alegría con la boca",
+    "answer": "risa"
+  },
+  {
+    "clue": "Bolsa grande de tela resistente",
+    "answer": "saco"
+  },
+  {
+    "clue": "Tela suave y brillante de gusano",
+    "answer": "seda"
+  },
+  {
+    "clue": "Organismo con sombrero que crece en bosques",
+    "answer": "seta"
+  },
+  {
+    "clue": "Cubierta de un recipiente o de comida",
+    "answer": "tapa"
+  },
+  {
+    "clue": "Cilindro hueco de metal o plástico",
+    "answer": "tubo"
+  },
+  {
+    "clue": "Cilindro de cera con mecha para iluminar",
+    "answer": "vela"
+  },
+  {
+    "clue": "Instrumento que indica la dirección del viento",
+    "answer": "polo"
+  },
+  {
+    "clue": "Parte superior puntiaguda de una montaña",
+    "answer": "pico"
+  },
+  {
+    "clue": "División de un árbol, subdivisión",
+    "answer": "rama"
+  },
+  {
+    "clue": "Instrumento fino y puntiagudo para coser",
+    "answer": "aguja"
+  },
+  {
+    "clue": "Cereal que se come en copos",
+    "answer": "avena"
+  },
+  {
+    "clue": "Embarcación plana de madera",
+    "answer": "balsa"
+  },
+  {
+    "clue": "Pieza larga de metal o pan",
+    "answer": "barra"
+  },
+  {
+    "clue": "Recipiente de tela o plástico para llevar cosas",
+    "answer": "bolsa"
+  },
+  {
+    "clue": "Viento suave y agradable",
+    "answer": "brisa"
+  },
+  {
+    "clue": "Semilla tropical del chocolate",
+    "answer": "cacao"
+  },
+  {
+    "clue": "Pieza metálica puntiaguda para fijar",
+    "answer": "clavo"
+  },
+  {
+    "clue": "Animal marino con forma de rama",
+    "answer": "coral"
+  },
+  {
+    "clue": "Base suave para pasteles y postres",
+    "answer": "crema"
+  },
+  {
+    "clue": "Baño rápido con agua corriente",
+    "answer": "ducha"
+  },
+  {
+    "clue": "Esfera que representa la Tierra",
+    "answer": "globo"
+  },
+  {
+    "clue": "Agua congelada formada por el frío",
+    "answer": "hielo"
+  },
+  {
+    "clue": "Sistema de transporte urbano subterráneo",
+    "answer": "metro"
+  },
+  {
+    "clue": "Progenitor masculino",
+    "answer": "padre"
+  },
+  {
+    "clue": "Costa arenosa junto al mar",
+    "answer": "playa"
+  },
+  {
+    "clue": "Mujer que gobierna un reino",
+    "answer": "reina"
+  },
+  {
+    "clue": "Instrumento que indica la hora",
+    "answer": "reloj"
+  },
+  {
+    "clue": "Pieza circular de un vehículo",
+    "answer": "rueda"
+  },
+  {
+    "clue": "Habitación grande en una casa",
+    "answer": "salon"
+  },
+  {
+    "clue": "Baile originario de Argentina",
+    "answer": "tango"
+  },
+  {
+    "clue": "Felino rayado de gran tamaño",
+    "answer": "tigre"
+  },
+  {
+    "clue": "Cereal dorado de los campos",
+    "answer": "trigo"
+  },
+  {
+    "clue": "Mamífero marino con ocho brazos",
+    "answer": "pulpo"
+  },
+  {
+    "clue": "Gusto que se percibe al comer",
+    "answer": "sabor"
+  },
+  {
+    "clue": "Bosque tropical denso y húmedo",
+    "answer": "selva"
+  },
+  {
+    "clue": "Período de cien años",
+    "answer": "siglo"
+  },
+  {
+    "clue": "Superficie donde pisamos en una casa",
+    "answer": "suelo"
+  },
+  {
+    "clue": "Animal que caza zorros",
+    "answer": "zorro"
+  },
+  {
+    "clue": "Zona residencial de una ciudad",
+    "answer": "barrio"
+  },
+  {
+    "clue": "Aleación de cobre y estaño",
+    "answer": "bronce"
+  },
+  {
+    "clue": "Vía o sendero para ir de un lugar a otro",
+    "answer": "camino"
+  },
+  {
+    "clue": "Material negro que se obtiene de la madera",
+    "answer": "carbon"
+  },
+  {
+    "clue": "Caja de material grueso para embalar",
+    "answer": "carton"
+  },
+  {
+    "clue": "Punto medio de algo, núcleo",
+    "answer": "centro"
+  },
+  {
+    "clue": "Hierba corta y verde de jardines y campos",
+    "answer": "cesped"
+  },
+  {
+    "clue": "Adorno circular que se pone en la cabeza",
+    "answer": "corona"
+  },
+  {
+    "clue": "Representación artística con trazos",
+    "answer": "dibujo"
+  },
+  {
+    "clue": "Criatura mitológica que escupe fuego",
+    "answer": "dragon"
+  },
+  {
+    "clue": "Superficie que refleja la imagen",
+    "answer": "espejo"
+  },
+  {
+    "clue": "Burbujas blancas de jabón o del mar",
+    "answer": "espuma"
+  },
+  {
+    "clue": "Territorio organizado políticamente",
+    "answer": "estado"
+  },
+  {
+    "clue": "Celebración con música y baile",
+    "answer": "fiesta"
+  },
+  {
+    "clue": "Polvo blanco con el que se hace pan",
+    "answer": "harina"
+  },
+  {
+    "clue": "Metal gris fuerte, se oxida fácilmente",
+    "answer": "hierro"
+  },
+  {
+    "clue": "Representación visual de algo",
+    "answer": "imagen"
+  },
+  {
+    "clue": "Marca que deja un líquido en la ropa",
+    "answer": "mancha"
+  },
+  {
+    "clue": "Pieza metálica usada como dinero",
+    "answer": "moneda"
+  },
+  {
+    "clue": "Gran caída de nieve en la montaña",
+    "answer": "nevada"
+  },
+  {
+    "clue": "Estación del año con hojas que caen",
+    "answer": "otono"
+  },
+  {
+    "clue": "Ave que puede hablar y es muy colorida",
+    "answer": "pajaro"
+  },
+  {
+    "clue": "Dulce horneado con crema y fruta",
+    "answer": "pastel"
+  },
+  {
+    "clue": "Comida que se sirve al final",
+    "answer": "postre"
+  },
+  {
+    "clue": "Riqueza escondida, algo muy valioso",
+    "answer": "tesoro"
+  },
+  {
+    "clue": "Número después del diecinueve",
+    "answer": "veinte"
+  },
+  {
+    "clue": "Sopa fría española con tomate",
+    "answer": "gazpacho"
+  },
+  {
+    "clue": "Masa con salsa y queso al horno",
+    "answer": "lasana"
+  },
+  {
+    "clue": "Punto más alto de una montaña",
+    "answer": "cumbre"
+  },
+  {
+    "clue": "Fruto seco de cáscara dura y marrón",
+    "answer": "nueces"
+  },
+  {
+    "clue": "Embarcación pequeña a remos",
+    "answer": "canoa"
+  },
+  {
+    "clue": "Juego de azar con números y cartones",
+    "answer": "loteria"
+  },
+  {
+    "clue": "Estación fría del año",
+    "answer": "invierno"
+  },
+  {
+    "clue": "Prenda que cubre las piernas de la mujer",
+    "answer": "falda"
+  },
+  {
+    "clue": "Tejido que cubre los huesos",
+    "answer": "musculo"
+  },
+  {
+    "clue": "Cada una de las partes de un libro",
+    "answer": "pagina"
+  },
+  {
+    "clue": "Tabla para escribir en clase",
+    "answer": "pizarra"
+  },
+  {
+    "clue": "Mueble con cajones para guardar ropa",
+    "answer": "comoda"
+  },
+  {
+    "clue": "Isla grande del Caribe",
+    "answer": "cuba"
+  },
+  {
+    "clue": "Relación de cariño y confianza",
+    "answer": "amistad"
+  },
+  {
+    "clue": "Tela con colores que representa un país",
+    "answer": "bandera"
+  },
+  {
+    "clue": "Instrumento metálico que suena al golpearlo",
+    "answer": "campana"
+  },
+  {
+    "clue": "Competición de velocidad",
+    "answer": "carrera"
+  },
+  {
+    "clue": "Órgano del pensamiento en la cabeza",
+    "answer": "cerebro"
+  },
+  {
+    "clue": "Bebida alcohólica de cebada fermentada",
+    "answer": "cerveza"
+  },
+  {
+    "clue": "Pilar vertical que sostiene un edificio",
+    "answer": "columna"
+  },
+  {
+    "clue": "Habitación donde se come",
+    "answer": "comedor"
+  },
+  {
+    "clue": "Recomendación o sugerencia",
+    "answer": "consejo"
+  },
+  {
+    "clue": "Utensilio grande para servir sopa",
+    "answer": "cuchara"
+  },
+  {
+    "clue": "Título que se obtiene al graduarse",
+    "answer": "diploma"
+  },
+  {
+    "clue": "Fenómeno donde la luna tapa al sol",
+    "answer": "eclipse"
+  },
+  {
+    "clue": "Caso que sirve para ilustrar una idea",
+    "answer": "ejemplo"
+  },
+  {
+    "clue": "Conector eléctrico en la pared",
+    "answer": "enchufe"
+  },
+  {
+    "clue": "Idioma hablado en España y Latinoamérica",
+    "answer": "espanol"
+  },
+  {
+    "clue": "Punto donde se encuentran dos calles",
+    "answer": "esquina"
+  },
+  {
+    "clue": "Lugar donde se producen cosas",
+    "answer": "fabrica"
+  },
+  {
+    "clue": "Grupo de padres e hijos",
+    "answer": "familia"
+  },
+  {
+    "clue": "Hijo del mismo padre o madre",
+    "answer": "hermano"
+  },
+  {
+    "clue": "Templo cristiano para rezar",
+    "answer": "iglesia"
+  },
+  {
+    "clue": "Animal invertebrado de seis patas",
+    "answer": "insecto"
+  },
+  {
+    "clue": "Acción de leer un texto",
+    "answer": "lectura"
+  },
+  {
+    "clue": "Aparato mecánico que facilita el trabajo",
+    "answer": "maquina"
+  },
+  {
+    "clue": "Disco metálico de premio",
+    "answer": "medalla"
+  },
+  {
+    "clue": "Lugar donde se compran y venden productos",
+    "answer": "mercado"
+  },
+  {
+    "clue": "Hecho extraordinario e inexplicable",
+    "answer": "milagro"
+  },
+  {
+    "clue": "Elevación natural grande del terreno",
+    "answer": "montana"
+  },
+  {
+    "clue": "Residencia lujosa de un rey",
+    "answer": "palacio"
+  },
+  {
+    "clue": "Ser humano, individuo",
+    "answer": "persona"
+  },
+  {
+    "clue": "Arte de aplicar colores sobre una superficie",
+    "answer": "pintura"
+  },
+  {
+    "clue": "Fruta tropical larga y amarilla",
+    "answer": "platano"
+  },
+  {
+    "clue": "Cuerpo celeste que gira alrededor del sol",
+    "answer": "planeta"
+  },
+  {
+    "clue": "Jardín grande con árboles frutales",
+    "answer": "huerto"
+  },
+  {
+    "clue": "Pared que separa dos habitaciones",
+    "answer": "tabique"
+  },
+  {
+    "clue": "Animal que vive en el agua y respira aire",
+    "answer": "delfin"
+  },
+  {
+    "clue": "Parte delantera de un barco",
+    "answer": "babor"
+  },
+  {
+    "clue": "Vehículo pesado para transportar mercancía",
+    "answer": "camion"
+  },
+  {
+    "clue": "Asiento largo para varias personas",
+    "answer": "butaca"
+  },
+  {
+    "clue": "Recipiente para guardar dinero",
+    "answer": "alcancia"
+  },
+  {
+    "clue": "Cojín grande donde apoyas la cabeza al dormir",
+    "answer": "almohada"
+  },
+  {
+    "clue": "Experiencia emocionante y arriesgada",
+    "answer": "aventura"
+  },
+  {
+    "clue": "Fortaleza medieval con torres",
+    "answer": "castillo"
+  },
+  {
+    "clue": "Libro con hojas para escribir notas",
+    "answer": "cuaderno"
+  },
+  {
+    "clue": "Construcción grande con pisos",
+    "answer": "edificio"
+  },
+  {
+    "clue": "Estructura con peldaños para subir",
+    "answer": "escalera"
+  },
+  {
+    "clue": "Cuerpo celeste que brilla de noche",
+    "answer": "estrella"
+  },
+  {
+    "clue": "Lugar donde sale o llega el tren",
+    "answer": "estacion"
+  },
+  {
+    "clue": "Persona que trabaja en una granja",
+    "answer": "granjero"
+  },
+  {
+    "clue": "Centro donde curan a los enfermos",
+    "answer": "hospital"
+  },
+  {
+    "clue": "Máquina para lavar la ropa",
+    "answer": "lavadora"
+  },
+  {
+    "clue": "Bebida refrescante hecha con limones",
+    "answer": "limonada"
+  },
+  {
+    "clue": "Grupo de músicos que tocan juntos",
+    "answer": "orquesta"
+  },
+  {
+    "clue": "Objeto plegable que protege de la lluvia",
+    "answer": "paraguas"
+  },
+  {
+    "clue": "Historia filmada para el cine",
+    "answer": "pelicula"
+  },
+  {
+    "clue": "Dificultad que hay que resolver",
+    "answer": "problema"
+  },
+  {
+    "clue": "Imagen del pasado que guardas en la mente",
+    "answer": "recuerdo"
+  },
+  {
+    "clue": "Prenda que protege la cabeza del sol",
+    "answer": "sombrero"
+  },
+  {
+    "clue": "Todo lo que existe: estrellas, planetas...",
+    "answer": "universo"
+  },
+  {
+    "clue": "Pieza de ropa elegante para fiestas",
+    "answer": "vestido"
+  },
+  {
+    "clue": "Vehículo con dos ruedas y pedales",
+    "answer": "bicicleta"
+  },
+  {
+    "clue": "Reptil grande con armadura de escamas",
+    "answer": "cocodrilo"
+  },
+  {
+    "clue": "Mueble grande donde guardas libros",
+    "answer": "estante"
+  },
+  {
+    "clue": "Persona que vive y trabaja en el campo",
+    "answer": "campesino"
+  },
+  {
+    "clue": "Persona que corta y vende carne",
+    "answer": "carnicero"
+  },
+  {
+    "clue": "Dulce hecho de cacao y azúcar",
+    "answer": "chocolate"
+  },
+  {
+    "clue": "Arte de tallar figuras en piedra",
+    "answer": "escultura"
+  },
+  {
+    "clue": "Lugar donde se representa una obra de teatro",
+    "answer": "escenario"
+  },
+  {
+    "clue": "Conjunto de huesos del cuerpo humano",
+    "answer": "esqueleto"
+  },
+  {
+    "clue": "Construcción militar defensiva",
+    "answer": "fortaleza"
+  },
+  {
+    "clue": "Línea donde el cielo parece tocar la tierra",
+    "answer": "horizonte"
+  },
+  {
+    "clue": "Extensión de tierra rodeada de agua por tres lados",
+    "answer": "peninsula"
+  },
+  {
+    "clue": "Estación del año en que florecen las plantas",
+    "answer": "primavera"
+  },
+  {
+    "clue": "Movimiento súbito y violento de la tierra",
+    "answer": "terremoto"
+  },
+  {
+    "clue": "Pareja de musicos",
+    "answer": "duo"
+  },
+  {
+    "clue": "Conciencia de uno mismo",
+    "answer": "ego"
+  },
+  {
+    "clue": "Producto viscoso para el pelo",
+    "answer": "gel"
+  },
+  {
+    "clue": "Unidad de herencia biologica",
+    "answer": "gen"
+  },
+  {
+    "clue": "Camino o carretera",
+    "answer": "via"
+  },
+  {
+    "clue": "Altar para sacrificios",
+    "answer": "ara"
+  },
+  {
+    "clue": "Dulce de membrillo",
+    "answer": "ate"
+  },
+  {
+    "clue": "Entregar algo a alguien",
+    "answer": "dar"
+  },
+  {
+    "clue": "Pasado del verbo ir",
+    "answer": "fue"
+  },
+  {
+    "clue": "Verbo que indica existencia",
+    "answer": "hay"
+  },
+  {
+    "clue": "Papel que desempena una persona",
+    "answer": "rol"
+  },
+  {
+    "clue": "Unidad de medida en quimica",
+    "answer": "mol"
+  },
+  {
+    "clue": "Fibra de la cascara de coco",
+    "answer": "tan"
+  },
+  {
+    "clue": "Hijo varon",
+    "answer": "hij"
+  },
+  {
+    "clue": "Nota musical despues de do",
+    "answer": "rem"
+  },
+  {
+    "clue": "Liquido infeccioso",
+    "answer": "pus"
+  },
+  {
+    "clue": "Composicion poetica",
+    "answer": "oda"
+  },
+  {
+    "clue": "Instrumento de viento de la Edad Media",
+    "answer": "oud"
+  },
+  {
+    "clue": "Sonido armonioso",
+    "answer": "son"
+  },
+  {
+    "clue": "Titulo nobiliario: duque, conde, ...",
+    "answer": "sir"
+  },
+  {
+    "clue": "Planta aromatica para cocinar",
+    "answer": "aji"
+  },
+  {
+    "clue": "Diosa egipcia de la magia",
+    "answer": "isis"
+  },
+  {
+    "clue": "Flecha o dardo",
+    "answer": "dardo"
+  },
+  {
+    "clue": "Recipiente para flores",
+    "answer": "vaso"
+  },
+  {
+    "clue": "Prenda de abrigo con mangas",
+    "answer": "anorak"
+  },
+  {
+    "clue": "Bebida caliente de hierbas",
+    "answer": "tes"
+  },
+  {
+    "clue": "Grito de animacion",
+    "answer": "ole"
+  },
+  {
+    "clue": "Afirmacion, opuesto a no",
+    "answer": "yes"
+  },
+  {
+    "clue": "Tela gruesa de lana",
+    "answer": "pano"
+  },
+  {
+    "clue": "Parte de la cara donde crece la barba",
+    "answer": "menton"
+  },
+  {
+    "clue": "Planta de hojas anchas acuatica",
+    "answer": "lis"
+  },
+  {
+    "clue": "Decimotercera letra del alfabeto",
+    "answer": "ene"
+  },
+  {
+    "clue": "Propiedad de superficie",
+    "answer": "are"
+  },
+  {
+    "clue": "Prefijo que significa tres",
+    "answer": "tri"
+  },
+  {
+    "clue": "Cuerda gruesa de barco",
+    "answer": "cabo"
+  },
+  {
+    "clue": "Aparato para ver las estrellas",
+    "answer": "lente"
+  },
+  {
+    "clue": "Segundo mes del ano",
+    "answer": "feb"
+  },
+  {
+    "clue": "Ruido fuerte y seco",
+    "answer": "crac"
+  },
+  {
+    "clue": "Organo del gusto",
+    "answer": "lengua"
+  }
+]
