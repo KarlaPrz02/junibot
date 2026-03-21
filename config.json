@@ -1,7 +1,63 @@
 {
-    "0": {
-        "birthdays": 0,
-        "welcome": 0,
-        "member_role": 0
+  "bot": {
+    "token": "your_token_here",
+    "prefix": "!",
+    "status": "online",
+    "activity": {
+      "type": "watching",
+      "name": "Juni"
     }
+  },
+
+  "users": {
+    "user1_id": 485273034295607297,
+    "user2_id": 1303027527799013458
+  },
+
+  "timezone": "Europe/Madrid",
+
+  "cogs": [
+    "cogs.reminders",
+    "cogs.birthdays",
+    "cogs.join_left",
+    "cogs.reactions",
+    "cogs.wordle"
+  ],
+
+  "archivos": {
+    "birthdays": "birthdays.json",
+    "reminders": "reminders.json",
+    "reactions": "reactions.json",
+    "stats": "stats.json",
+    "palabras": "palabras.txt",
+    "crucigrama": "crucigrama.json"
+  },
+
+  "wordle": {
+    "fecha_inicio": "2025-06-06",
+    "max_intentos": 6,
+    "longitud_palabra": 5
+  },
+
+  "estado": {
+    "imagen_principal": "image.png",
+    "imagenes": ["estado1.PNG", "estado2.PNG", "estado3.PNG", "estado4.PNG"]
+  },
+
+  "carla": {
+    "imagen_principal": "image2.png",
+    "imagenes": ["noche.PNG", "muejeje.PNG", "insane.gif", "breakdown.PNG"]
+  },
+
+  "crucigrama": {
+    "app_id": 449903611128971275
+  },
+
+  "guilds": {
+    "0": {
+      "birthdays": 0,
+      "welcome": 0,
+      "member_role": 0
+    }
+  }
 }

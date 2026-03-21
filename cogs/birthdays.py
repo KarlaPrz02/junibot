@@ -8,8 +8,21 @@ from discord import app_commands
 from discord.ext import commands
 from typing import Optional
 
-TZ = ZoneInfo("Europe/Madrid")
-DATE_FORMAT = "%d-%m" 
+CONFIG_FILE = "config.json"
+
+def _load_full_config():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+_FULL_CONFIG = _load_full_config()
+TZ = ZoneInfo(_FULL_CONFIG.get("timezone", "Europe/Madrid"))
+DATE_FORMAT = "%d-%m"
+DATA_FILE = _FULL_CONFIG.get("archivos", {}).get("birthdays", "birthdays.json")
 
 
 async def usuario_autocomplete(interaction: discord.Interaction, current: str):
@@ -25,9 +38,6 @@ async def usuario_autocomplete(interaction: discord.Interaction, current: str):
         if len(choices) >= 25:
             break
     return choices
-
-DATA_FILE = "birthdays.json"  # guarda cumpleaños por servidor
-CONFIG_FILE = "config.json"   # mapa guild_id -> channel_id 
 
 def _load_data():
     if os.path.exists(DATA_FILE):
@@ -45,18 +55,17 @@ def _save_data(d):
     os.replace(tmp, DATA_FILE)
 
 def _load_config():
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return {}
-    return {}
+    """Load guild-specific config from config.json."""
+    config = _load_full_config()
+    return config.get("guilds", {})
 
-def _save_config(d):
+def _save_config(guilds):
+    """Save guild config back to config.json preserving other settings."""
+    config = _load_full_config()
+    config["guilds"] = guilds
     tmp = CONFIG_FILE + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(d, f, ensure_ascii=False, indent=2)
+        json.dump(config, f, ensure_ascii=False, indent=2)
     os.replace(tmp, CONFIG_FILE)
 
 class Birthdays(commands.Cog):

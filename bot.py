@@ -1,14 +1,17 @@
 import discord
 from discord.ext import commands
 import os
+import json
 from discord import app_commands
 import random
 from discord.ui import View, button
 
+# Cargar configuración centralizada
+with open("config.json", "r", encoding="utf-8") as f:
+    CONFIG = json.load(f)
 
-
-USER1_ID = 485273034295607297
-USER2_ID = 1303027527799013458
+USER1_ID = CONFIG["users"]["user1_id"]
+USER2_ID = CONFIG["users"]["user2_id"]
 
 # intents
 intents = discord.Intents.default()
@@ -16,34 +19,29 @@ intents.message_content = True
 intents.members = True  
 intents.presences = True  
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix=CONFIG["bot"]["prefix"], intents=intents)
+bot.config = CONFIG
+
+ACTIVITY_TYPES = {
+    "watching": discord.ActivityType.watching,
+    "playing": discord.ActivityType.playing,
+    "listening": discord.ActivityType.listening,
+    "streaming": discord.ActivityType.streaming,
+}
+STATUS_TYPES = {
+    "online": discord.Status.online,
+    "idle": discord.Status.idle,
+    "dnd": discord.Status.dnd,
+    "invisible": discord.Status.invisible,
+}
 
 @bot.event
 async def on_ready():
-    try:
-        await bot.load_extension("cogs.reminders")
-    except Exception as e:
-        print("Error cargando reminders:", e)
-
-    try:
-        await bot.load_extension("cogs.birthdays")
-    except Exception as e:
-        print("Error cargando birthdays:", e)
-
-    try:
-        await bot.load_extension("cogs.join_left")
-    except Exception as e:
-        print("Error cargando join_left:", e)
-
-    try:
-        await bot.load_extension("cogs.reactions")
-    except Exception as e:
-        print("Error cargando reactions:", e)
-
-    try:
-        await bot.load_extension("cogs.wordle")
-    except Exception as e:
-        print("Error cargando wordle:", e)
+    for cog in CONFIG["cogs"]:
+        try:
+            await bot.load_extension(cog)
+        except Exception as e:
+            print(f"Error cargando {cog}:", e)
 
     print(f"Connecting as {bot.user}...")
 
@@ -53,8 +51,15 @@ async def on_ready():
     except Exception as e:
         print(f"Error sync commands: {e}")
 
-    activity = discord.Activity(type=discord.ActivityType.watching, name="Juni")
-    await bot.change_presence(status=discord.Status.online, activity=activity)
+    activity_cfg = CONFIG["bot"]["activity"]
+    activity = discord.Activity(
+        type=ACTIVITY_TYPES.get(activity_cfg["type"], discord.ActivityType.watching),
+        name=activity_cfg["name"]
+    )
+    await bot.change_presence(
+        status=STATUS_TYPES.get(CONFIG["bot"]["status"], discord.Status.online),
+        activity=activity
+    )
 
     print("Bot is ready!")
 
@@ -71,9 +76,9 @@ async def juni_slash(interaction: discord.Interaction):
 # Comando con prefijo: !imagen
 @bot.command(name="estado", description="Envía la ruleta de los estados de juni.")
 async def estado_command(ctx):
-    image_path = os.path.join("assets", "image.png")
+    image_path = os.path.join("assets", CONFIG["estado"]["imagen_principal"])
     with open(image_path, "rb") as f:
-        file = discord.File(f, filename="image.png")
+        file = discord.File(f, filename=CONFIG["estado"]["imagen_principal"])
         await ctx.send(file=file)
 
 # slash estado
@@ -85,16 +90,15 @@ class EstadoGroup(app_commands.Group):
     @app_commands.command(name="imagen", description="Envía la ruleta de los estados de Juni.")
     async def ruleta(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        image_path = os.path.join("assets", "image.png")
+        image_path = os.path.join("assets", CONFIG["estado"]["imagen_principal"])
         with open(image_path, "rb") as f:
-            file = discord.File(f, filename="image.png")
+            file = discord.File(f, filename=CONFIG["estado"]["imagen_principal"])
             await interaction.followup.send(file=file)
 
     @app_commands.command(name="actual", description="Muestra un estado aleatorio de Juni.")
     async def actual(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        image_files = ["estado1.PNG", "estado2.PNG", "estado3.PNG", "estado4.PNG"]
-        selected_image = random.choice(image_files)
+        selected_image = random.choice(CONFIG["estado"]["imagenes"])
         image_path = os.path.join("assets", selected_image)
         with open(image_path, "rb") as f:
             file = discord.File(f, filename=selected_image)
@@ -109,16 +113,15 @@ class carlaGroup(app_commands.Group):
     @app_commands.command(name="imagen", description="Envía la ruleta de los estados de Carla.")
     async def ruleta(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        image_path = os.path.join("assets", "image2.png")
+        image_path = os.path.join("assets", CONFIG["carla"]["imagen_principal"])
         with open(image_path, "rb") as f:
-            file = discord.File(f, filename="image2.png")
+            file = discord.File(f, filename=CONFIG["carla"]["imagen_principal"])
             await interaction.followup.send(file=file)
 
     @app_commands.command(name="actual", description="Muestra un estado aleatorio de Carla.")
     async def actual(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        image_files = ["noche.PNG", "muejeje.PNG", "insane.gif", "breakdown.PNG"]
-        selected_image = random.choice(image_files)
+        selected_image = random.choice(CONFIG["carla"]["imagenes"])
         image_path = os.path.join("assets", selected_image)
         with open(image_path, "rb") as f:
             file = discord.File(f, filename=selected_image)
@@ -226,7 +229,7 @@ async def juni_prefix(ctx):
 
 # slash crucigrama (Discord Activity)
 
-CRUCIGRAMA_APP_ID = 449903611128971275
+CRUCIGRAMA_APP_ID = CONFIG["crucigrama"]["app_id"]
 
 @bot.tree.command(name="crucigrama", description="Abre el crucigrama como actividad de Discord")
 async def crucigrama_slash(interaction: discord.Interaction):
@@ -261,6 +264,6 @@ async def crucigrama_slash(interaction: discord.Interaction):
 
 
 
-bot.run("your_token_here")
+bot.run(CONFIG["bot"]["token"])
 
 
