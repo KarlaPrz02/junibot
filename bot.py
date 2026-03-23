@@ -1,14 +1,18 @@
 import discord
 from discord.ext import commands
 import os
+import json
 from discord import app_commands
 import random
 from discord.ui import View, button
+from api_client import APIClient
 
+# Cargar configuración centralizada
+with open("config.json", "r", encoding="utf-8") as f:
+    CONFIG = json.load(f)
 
-
-USER1_ID = 485273034295607297
-USER2_ID = 1303027527799013458
+USER1_ID = CONFIG["users"]["user1_id"]
+USER2_ID = CONFIG["users"]["user2_id"]
 
 # intents
 intents = discord.Intents.default()
@@ -16,34 +20,32 @@ intents.message_content = True
 intents.members = True  
 intents.presences = True  
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix=CONFIG["bot"]["prefix"], intents=intents)
+bot.config = CONFIG
+bot.api = APIClient(CONFIG.get("api", {}))
+print("DEBUG api config:", CONFIG.get("api", {}), flush=True)
+print("DEBUG bot.api creada:", bot.api, flush=True)
+
+ACTIVITY_TYPES = {
+    "watching": discord.ActivityType.watching,
+    "playing": discord.ActivityType.playing,
+    "listening": discord.ActivityType.listening,
+    "streaming": discord.ActivityType.streaming,
+}
+STATUS_TYPES = {
+    "online": discord.Status.online,
+    "idle": discord.Status.idle,
+    "dnd": discord.Status.dnd,
+    "invisible": discord.Status.invisible,
+}
 
 @bot.event
 async def on_ready():
-    try:
-        await bot.load_extension("cogs.reminders")
-    except Exception as e:
-        print("Error cargando reminders:", e)
-
-    try:
-        await bot.load_extension("cogs.birthdays")
-    except Exception as e:
-        print("Error cargando birthdays:", e)
-
-    try:
-        await bot.load_extension("cogs.join_left")
-    except Exception as e:
-        print("Error cargando join_left:", e)
-
-    try:
-        await bot.load_extension("cogs.reactions")
-    except Exception as e:
-        print("Error cargando reactions:", e)
-
-    try:
-        await bot.load_extension("cogs.wordle")
-    except Exception as e:
-        print("Error cargando wordle:", e)
+    for cog in CONFIG["cogs"]:
+        try:
+            await bot.load_extension(cog)
+        except Exception as e:
+            print(f"Error cargando {cog}:", e)
 
     print(f"Connecting as {bot.user}...")
 
@@ -53,8 +55,15 @@ async def on_ready():
     except Exception as e:
         print(f"Error sync commands: {e}")
 
-    activity = discord.Activity(type=discord.ActivityType.watching, name="Juni")
-    await bot.change_presence(status=discord.Status.online, activity=activity)
+    activity_cfg = CONFIG["bot"]["activity"]
+    activity = discord.Activity(
+        type=ACTIVITY_TYPES.get(activity_cfg["type"], discord.ActivityType.watching),
+        name=activity_cfg["name"]
+    )
+    await bot.change_presence(
+        status=STATUS_TYPES.get(CONFIG["bot"]["status"], discord.Status.online),
+        activity=activity
+    )
 
     print("Bot is ready!")
 
@@ -71,9 +80,9 @@ async def juni_slash(interaction: discord.Interaction):
 # Comando con prefijo: !imagen
 @bot.command(name="estado", description="Envía la ruleta de los estados de juni.")
 async def estado_command(ctx):
-    image_path = os.path.join("assets", "image.png")
+    image_path = os.path.join("assets", CONFIG["estado"]["imagen_principal"])
     with open(image_path, "rb") as f:
-        file = discord.File(f, filename="image.png")
+        file = discord.File(f, filename=CONFIG["estado"]["imagen_principal"])
         await ctx.send(file=file)
 
 # slash estado
@@ -85,16 +94,15 @@ class EstadoGroup(app_commands.Group):
     @app_commands.command(name="imagen", description="Envía la ruleta de los estados de Juni.")
     async def ruleta(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        image_path = os.path.join("assets", "image.png")
+        image_path = os.path.join("assets", CONFIG["estado"]["imagen_principal"])
         with open(image_path, "rb") as f:
-            file = discord.File(f, filename="image.png")
+            file = discord.File(f, filename=CONFIG["estado"]["imagen_principal"])
             await interaction.followup.send(file=file)
 
     @app_commands.command(name="actual", description="Muestra un estado aleatorio de Juni.")
     async def actual(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        image_files = ["estado1.PNG", "estado2.PNG", "estado3.PNG", "estado4.PNG"]
-        selected_image = random.choice(image_files)
+        selected_image = random.choice(CONFIG["estado"]["imagenes"])
         image_path = os.path.join("assets", selected_image)
         with open(image_path, "rb") as f:
             file = discord.File(f, filename=selected_image)
@@ -109,16 +117,15 @@ class carlaGroup(app_commands.Group):
     @app_commands.command(name="imagen", description="Envía la ruleta de los estados de Carla.")
     async def ruleta(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        image_path = os.path.join("assets", "image2.png")
+        image_path = os.path.join("assets", CONFIG["carla"]["imagen_principal"])
         with open(image_path, "rb") as f:
-            file = discord.File(f, filename="image2.png")
+            file = discord.File(f, filename=CONFIG["carla"]["imagen_principal"])
             await interaction.followup.send(file=file)
 
     @app_commands.command(name="actual", description="Muestra un estado aleatorio de Carla.")
     async def actual(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        image_files = ["noche.PNG", "muejeje.PNG", "insane.gif", "breakdown.PNG"]
-        selected_image = random.choice(image_files)
+        selected_image = random.choice(CONFIG["carla"]["imagenes"])
         image_path = os.path.join("assets", selected_image)
         with open(image_path, "rb") as f:
             file = discord.File(f, filename=selected_image)
@@ -226,7 +233,7 @@ async def juni_prefix(ctx):
 
 # slash crucigrama (Discord Activity)
 
-CRUCIGRAMA_APP_ID = 449903611128971275
+CRUCIGRAMA_APP_ID = CONFIG["crucigrama"]["app_id"]
 
 @bot.tree.command(name="crucigrama", description="Abre el crucigrama como actividad de Discord")
 async def crucigrama_slash(interaction: discord.Interaction):
@@ -257,10 +264,114 @@ async def crucigrama_slash(interaction: discord.Interaction):
         await interaction.response.send_message(
             f"❌ Error al lanzar la actividad: {e}", ephemeral=True
         )
+        
+# apistats
+@bot.tree.command(name="apistats", description="Muestra las estadísticas de la API")
+async def apistats_slash(interaction: discord.Interaction):
+    if not hasattr(bot, "api"):
+        await interaction.response.send_message(
+            "❌ La API no está configurada en el bot.",
+            ephemeral=True
+        )
+        return
+
+    data = await bot.api.get_stats()
+    
+    async def get_logs(self, limit=5, source=None):
+        if not self.enabled:
+            return None
+
+        params = {"limit": limit}
+        if source:
+            params["source"] = source
+
+        try:
+            response = await self.client.get(f"{self.base_url}/logs", params=params)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            print(f"[API] Error leyendo logs: {e}", flush=True)
+            return None
+
+    if not data:
+        await interaction.response.send_message(
+            "❌ No se pueden obtener las estadísticas de la API en este momento.",
+            ephemeral=True
+        )
+        return
+
+    total_logs = data.get("total_logs", 0)
+    by_level = data.get("by_level", [])
+
+    embed = discord.Embed(
+        title="📊 Estadísticas de la API",
+        color=discord.Color.blue()
+    )
+    embed.add_field(name="Total de logs", value=str(total_logs), inline=False)
+
+    if by_level:
+        detalle = "\n".join(
+            f"• {item['level']}: {item['total']}"
+            for item in by_level
+        )
+    else:
+        detalle = "Todavía no hay logs."
+
+    embed.add_field(name="Logs por nivel", value=detalle, inline=False)
+    embed.set_footer(text="Datos leídos desde FastAPI")
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+    
+#apistats
+@bot.tree.command(name="apilogs", description="Muestra los últimos logs de la API")
+async def apilogs_slash(interaction: discord.Interaction, limite: int = 5):
+    if not hasattr(bot, "api"):
+        await interaction.response.send_message(
+            "❌ La API no está configurada en el bot.",
+            ephemeral=True
+        )
+        return
+
+    limite = max(1, min(limite, 10))
+
+    logs = await bot.api.get_logs(limit=limite, source="juni-bot")
+
+    if logs is None:
+        await interaction.response.send_message(
+            "❌ No se pueden obtener los logs de la API en este momento.",
+            ephemeral=True
+        )
+        return
+
+    if not logs:
+        await interaction.response.send_message(
+            "ℹ️ No hay logs todavía.",
+            ephemeral=True
+        )
+        return
+
+    descripcion = []
+    for log in logs:
+        descripcion.append(
+            f"**#{log['id']}** [{log['level']}] `{log['tag']}`\n"
+            f"{log['message']}\n"
+            f"🕒 {log['created_at']}"
+        )
+
+    embed = discord.Embed(
+        title="📝 Últimos logs de JuniBot",
+        description="\n\n".join(descripcion)[:4000],
+        color=discord.Color.green()
+    )
+    embed.set_footer(text="Datos leídos desde FastAPI")
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
+@bot.event
+async def on_close():
+    await bot.api.close()
 
-
-bot.run("your_token_here")
+bot.run(CONFIG["bot"]["token"])
 
 

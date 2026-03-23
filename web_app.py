@@ -6,8 +6,16 @@ from datetime import date, datetime
 from zoneinfo import ZoneInfo
 from flask import Flask, session, render_template, request, redirect, url_for, jsonify
 
-TZ = ZoneInfo("Europe/Madrid")
-WORDS_FILE = "crucigrama.json"
+def _load_bot_config():
+    try:
+        with open("config.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+_CONFIG = _load_bot_config()
+TZ = ZoneInfo(_CONFIG.get("timezone", "Europe/Madrid"))
+WORDS_FILE = _CONFIG.get("archivos", {}).get("crucigrama", "crucigrama.json")
 
 DEFAULT_CROSSWORD_ENTRIES = [
     {"clue": "Planeta conocido como el planeta rojo", "answer": "marte"},

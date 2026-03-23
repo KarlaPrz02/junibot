@@ -9,8 +9,18 @@ from discord import app_commands
 from discord.ext import commands
 from typing import Optional
 
-REMINDERS_FILE = "reminders.json"
-TZ = ZoneInfo("Europe/Madrid")
+CONFIG_FILE = "config.json"
+
+def _load_bot_config():
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+_CONFIG = _load_bot_config()
+REMINDERS_FILE = _CONFIG.get("archivos", {}).get("reminders", "reminders.json")
+TZ = ZoneInfo(_CONFIG.get("timezone", "Europe/Madrid"))
 DATE_FORMAT = "%d-%m-%Y %H:%M"  
 
 def _load_reminders():

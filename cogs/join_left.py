@@ -26,10 +26,11 @@ class JoinLeft(commands.Cog):
     async def on_member_join(self, member: discord.Member):
         """Se ejecuta cuando un miembro se une al servidor."""
         guild_id = str(member.guild.id)
+        guilds = self.config.get("guilds", {})
         
         # Asignar rol si está configurado
-        if guild_id in self.config:
-            guild_config = self.config[guild_id]
+        if guild_id in guilds:
+            guild_config = guilds[guild_id]
             if isinstance(guild_config, dict):
                 role_id = guild_config.get("member_role")
                 if role_id and role_id > 0:
@@ -44,8 +45,8 @@ class JoinLeft(commands.Cog):
         
         # Enviar mensaje de bienvenida
         channel_id = None
-        if guild_id in self.config:
-            guild_config = self.config[guild_id]
+        if guild_id in guilds:
+            guild_config = guilds[guild_id]
             if isinstance(guild_config, dict):
                 channel_id = guild_config.get("welcome")
         
@@ -64,11 +65,12 @@ class JoinLeft(commands.Cog):
     async def on_member_remove(self, member: discord.Member):
         """Se ejecuta cuando un miembro abandona el servidor."""
         guild_id = str(member.guild.id)
+        guilds = self.config.get("guilds", {})
         
         # Obtener el canal de bienvenida del config (usa el mismo para salidas)
         channel_id = None
-        if guild_id in self.config:
-            guild_config = self.config[guild_id]
+        if guild_id in guilds:
+            guild_config = guilds[guild_id]
             if isinstance(guild_config, dict):
                 channel_id = guild_config.get("welcome")
         

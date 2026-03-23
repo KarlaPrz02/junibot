@@ -87,8 +87,9 @@ class Birthdays(commands.Cog):
                     for guild_id, gdata in list(self.data.items()):
                         # prefer channel from config.json, fallback to gdata["channel_id"]
                         cfg_channel = None
-                        if guild_id in self.config:
-                            guild_config = self.config[guild_id]
+                        guilds = self.config.get("guilds", {})
+                        if guild_id in guilds:
+                            guild_config = guilds[guild_id]
                             if isinstance(guild_config, dict):
                                 cfg_channel = guild_config.get("birthdays")
                         channel_id = cfg_channel or gdata.get("channel_id")
@@ -282,12 +283,8 @@ async def cumple_command(
             await interaction.followup.send(f"✅ Cumpleaños de {target_mention} actualizado a `{ndt.strftime(DATE_FORMAT)}`.", ephemeral=True)
         return
 
-    # VIEWALL (solo administradores)
+    # VIEWALL
     if act == "viewall":
-        if not interaction.user.guild_permissions.administrator:
-            await interaction.followup.send("Necesitas permisos de administrador para usar esta opción.", ephemeral=True)
-            return
-
         gid = str(interaction.guild.id)
         # leer de forma segura
         async with cog._lock:

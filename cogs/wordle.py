@@ -9,9 +9,23 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Dict, Optional
 
+CONFIG_FILE = "config.json"
 
-STATS_FILE = "stats.json"
-FECHA_INICIO = datetime(2025, 6, 6, tzinfo=ZoneInfo("Europe/Madrid")).date()
+def _load_bot_config():
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+_CONFIG = _load_bot_config()
+_WORDLE_CFG = _CONFIG.get("wordle", {})
+STATS_FILE = _CONFIG.get("archivos", {}).get("stats", "stats.json")
+PALABRAS_FILE = _CONFIG.get("archivos", {}).get("palabras", "palabras.txt")
+_TZ = ZoneInfo(_CONFIG.get("timezone", "Europe/Madrid"))
+FECHA_INICIO = datetime.strptime(_WORDLE_CFG.get("fecha_inicio", "2025-06-06"), "%Y-%m-%d").replace(tzinfo=_TZ).date()
+MAX_INTENTOS = _WORDLE_CFG.get("max_intentos", 6)
+LONGITUD_PALABRA = _WORDLE_CFG.get("longitud_palabra", 5)
 
 
 class JugarWordleView(discord.ui.View):
@@ -32,7 +46,7 @@ class Wordle(commands.Cog):
         self.ended_games: Dict[int, Dict] = {}
         self.palabras_diarias = []
         self.user_stats: Dict[int, Dict[str, int]] = {}
-        self.ultima_fecha = datetime.now(ZoneInfo("Europe/Madrid")).date()
+        self.ultima_fecha = datetime.now(_TZ).date()
 
     async def cog_load(self):
         self.cargar_stats()
@@ -41,10 +55,10 @@ class Wordle(commands.Cog):
     def cargar_palabras(self):
         print("Cargando palabras...")
         try:
-            with open("palabras.txt", encoding="utf-8") as f:
-                self.palabras_diarias = [line.strip().lower() for line in f if len(line.strip()) == 5]
+            with open(PALABRAS_FILE, encoding="utf-8") as f:
+                self.palabras_diarias = [line.strip().lower() for line in f if len(line.strip()) == LONGITUD_PALABRA]
         except FileNotFoundError:
-            print("❌ No se encontró 'palabras.txt'")
+            print(f"❌ No se encontró '{PALABRAS_FILE}'")
             self.palabras_diarias = []
         print(f"Palabras cargadas: {len(self.palabras_diarias)}")
 
@@ -64,9 +78,20 @@ class Wordle(commands.Cog):
     def guardar_stats(self):
         with open(STATS_FILE, "w", encoding="utf-8") as f:
             json.dump(self.user_stats, f, ensure_ascii=False, indent=4)
-
+            
+    
+    async def log_api(self, message: str, level: str = "info", tag: str = "wordle"):
+        api = getattr(self.bot, "api", None)
+        if not api:
+            return
+        await api.create_log(
+            message=message,
+            level=level,
+            source="juni-bot",
+            tag=tag
+        )
     def obtener_palabra_del_dia(self):
-        hoy = datetime.now(ZoneInfo("Europe/Madrid")).date()
+        hoy = datetime.now(_TZ).date()
         dias_transcurridos = (hoy - FECHA_INICIO).days
         if dias_transcurridos < len(self.palabras_diarias):
             return self.palabras_diarias[dias_transcurridos]
@@ -74,7 +99,7 @@ class Wordle(commands.Cog):
             return self.palabras_diarias[dias_transcurridos % len(self.palabras_diarias)]
 
     def limpiar_cache_si_cambio_dia(self):
-        hoy = datetime.now(ZoneInfo("Europe/Madrid")).date()
+        hoy = datetime.now(_TZ).date()
         if hoy != self.ultima_fecha:
             self.active_games.clear()
             self.ultima_fecha = hoy
@@ -101,7 +126,7 @@ class Wordle(commands.Cog):
         return letras, resultado
 
     def actualizar_stats(self, user_id: int, victoria: bool):
-        hoy = datetime.now(ZoneInfo("Europe/Madrid")).date().isoformat()
+        hoy = datetime.now(_TZ).date().isoformat()
         self.user_stats.setdefault(user_id, {"victorias": 0, "derrotas": 0, "ultima_partida": ""})
         if victoria:
             self.user_stats[user_id]["victorias"] += 1
@@ -113,7 +138,7 @@ class Wordle(commands.Cog):
     async def iniciar_wordle(self, interaction: discord.Interaction):
         self.limpiar_cache_si_cambio_dia()
         user_id = interaction.user.id
-        hoy = datetime.now(ZoneInfo("Europe/Madrid")).date().isoformat()
+        hoy = datetime.now(_TZ).date().isoformat()
 
         stats = self.user_stats.get(user_id, {})
         ultima = stats.get("ultima_partida")
@@ -127,14 +152,14 @@ class Wordle(commands.Cog):
             return
 
         try:
-            with open("palabras.txt", encoding="utf-8") as f:
-                lista_palabras = [line.strip().lower() for line in f if len(line.strip()) == 5]
+            with open(PALABRAS_FILE, encoding="utf-8") as f:
+                lista_palabras = [line.strip().lower() for line in f if len(line.strip()) == LONGITUD_PALABRA]
         except FileNotFoundError:
-            await interaction.response.send_message("❌ No se encontró el archivo `palabras.txt`.", ephemeral=True)
+            await interaction.response.send_message(f"❌ No se encontró el archivo `{PALABRAS_FILE}`.", ephemeral=True)
             return
 
         if not lista_palabras:
-            await interaction.response.send_message("⚠️ El archivo `palabras.txt` está vacío o mal formateado.", ephemeral=True)
+            await interaction.response.send_message(f"⚠️ El archivo `{PALABRAS_FILE}` está vacío o mal formateado.", ephemeral=True)
             return
 
         palabra_objetivo = self.obtener_palabra_del_dia()
@@ -144,6 +169,12 @@ class Wordle(commands.Cog):
             "historial": [],
             "canal_id": interaction.channel.id
         }
+        
+        await self.log_api(
+            message=f"Wordle iniciado por {interaction.user.display_name} (user_id={interaction.user.id}) en canal {interaction.channel.id}",
+            level="info",
+            tag="wordle_start"
+        )
 
         await interaction.response.send_message(
             "🎮 ¡Partida iniciada! Usa `/intento palabra:<palabra>` para jugar.",
@@ -187,26 +218,32 @@ class Wordle(commands.Cog):
 
             palabra = palabra.lower().strip()
 
-            if len(palabra) != 5 or not palabra.isalpha():
-                await interaction.response.send_message("❌ La palabra debe tener exactamente 5 letras.", ephemeral=True)
+            if len(palabra) != LONGITUD_PALABRA or not palabra.isalpha():
+                await interaction.response.send_message(f"❌ La palabra debe tener exactamente {LONGITUD_PALABRA} letras.", ephemeral=True)
                 return
 
             if palabra in self.palabras_diarias:
                 await interaction.response.send_message("⚠️ Esa palabra ya está en la lista.", ephemeral=True)
                 return
 
-            await interaction.response.defer(ephemeral=True)
+            await interaction.response.defer(ephemeral=False)
 
             es_real = await self.verificar_palabra_rae(palabra)
             if not es_real:
-                await interaction.followup.send("❌ Esa palabra no se encontró en el diccionario de la RAE.", ephemeral=True)
+                await interaction.followup.send("❌ Esa palabra no se encontró en el diccionario de la RAE.")
                 return
 
-            with open("palabras.txt", "a", encoding="utf-8") as f:
+            with open(PALABRAS_FILE, "a", encoding="utf-8") as f:
                 f.write(f"\n{palabra}")
             self.palabras_diarias.append(palabra)
+            
+            await self.log_api(
+                message=f"Palabra añadida al Wordle: {palabra} por {interaction.user.display_name} (user_id={interaction.user.id})",
+                level="info",
+                tag="wordle_add_word"
+            )
 
-            await interaction.followup.send(f"✅ La palabra **{palabra}** se ha añadido al Wordle.", ephemeral=True)
+            await interaction.followup.send(f"✅ La palabra **{palabra}** se ha añadido al Wordle.")
 
     @app_commands.command(name="intento", description="Envía un intento para el Wordle en curso")
     @app_commands.describe(palabra="Tu intento de 5 letras")
@@ -219,8 +256,8 @@ class Wordle(commands.Cog):
             await interaction.response.send_message("❌ No tienes una partida activa. Usa `/wordle` para empezar.", ephemeral=True)
             return
 
-        if len(palabra) != 5 or not palabra.isalpha():
-            await interaction.response.send_message("❌ La palabra debe tener exactamente 5 letras.", ephemeral=True)
+        if len(palabra) != LONGITUD_PALABRA or not palabra.isalpha():
+            await interaction.response.send_message(f"❌ La palabra debe tener exactamente {LONGITUD_PALABRA} letras.", ephemeral=True)
             return
 
         await interaction.response.defer(ephemeral=True)
@@ -241,7 +278,7 @@ class Wordle(commands.Cog):
         nombre_usuario = interaction.user.display_name
 
         embed = discord.Embed(
-            title=f"Wordle — Intento {partida['intentos']} de 6",
+            title=f"Wordle — Intento {partida['intentos']} de {MAX_INTENTOS}",
             color=discord.Color.orange()
         )
         embed.add_field(name="Tu intento", value=f"{letras}\n{colores}", inline=False)
@@ -249,7 +286,7 @@ class Wordle(commands.Cog):
         grid = "\n".join(f"{l}\n{c}" for l, c in partida["historial"])
         embed.add_field(name="Historial", value=f"```{grid}```", inline=False)
 
-        intentos_restantes = 6 - partida["intentos"]
+        intentos_restantes = MAX_INTENTOS - partida["intentos"]
         embed.set_footer(text=f"{intentos_restantes} intento(s) restante(s)" if intentos_restantes else "Último intento")
 
         await interaction.followup.send(embed=embed, ephemeral=True)
@@ -259,15 +296,32 @@ class Wordle(commands.Cog):
             grid = "\n".join(r for _, r in partida["historial"])
             mensaje_publico += "\n" + f"```{grid}```" + "\n"
             self.actualizar_stats(user_id, victoria=True)
+            
+            await self.log_api(
+                message=f"Victoria Wordle de {interaction.user.display_name} (user_id={user_id}) en {partida['intentos']} intentos",
+                level="info",
+                tag="wordle_win"
+            )
             await canal.send(mensaje_publico, view=JugarWordleView())
+            await self.log_api(
+                message=f"Wordle ganado por {interaction.user.display_name} (user_id={interaction.user.id}) en canal {interaction.channel.id}",
+                level="info",
+                tag="wordle_win"
+            )
             self.ended_games[user_id] = partida
             del self.active_games[user_id]
 
-        elif partida["intentos"] >= 6:
-            mensaje_publico = f"❌ **{nombre_usuario}** no adivinó la palabra en 6 intentos.\n"
+        elif partida["intentos"] >= MAX_INTENTOS:
+            mensaje_publico = f"❌ **{nombre_usuario}** no adivinó la palabra en {MAX_INTENTOS} intentos.\n"
             grid = "\n".join(r for _, r in partida["historial"])
             mensaje_publico += "\n" + f"```{grid}```" + "\n"
             self.actualizar_stats(user_id, victoria=False)
+            
+            await self.log_api(
+                message=f"Derrota Wordle de {interaction.user.display_name} (user_id={user_id}) tras {MAX_INTENTOS} intentos",
+                level="warning",
+                tag="wordle_loss"
+            )
             await canal.send(mensaje_publico, view=JugarWordleView())
             self.ended_games[user_id] = partida
             del self.active_games[user_id]
