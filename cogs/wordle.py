@@ -209,18 +209,18 @@ class Wordle(commands.Cog):
                 await interaction.response.send_message("⚠️ Esa palabra ya está en la lista.", ephemeral=True)
                 return
 
-            await interaction.response.defer(ephemeral=True)
+            await interaction.response.defer(ephemeral=False)
 
             es_real = await self.verificar_palabra_rae(palabra)
             if not es_real:
-                await interaction.followup.send("❌ Esa palabra no se encontró en el diccionario de la RAE.", ephemeral=True)
+                await interaction.followup.send("❌ Esa palabra no se encontró en el diccionario de la RAE.")
                 return
 
             with open(PALABRAS_FILE, "a", encoding="utf-8") as f:
                 f.write(f"\n{palabra}")
             self.palabras_diarias.append(palabra)
 
-            await interaction.followup.send(f"✅ La palabra **{palabra}** se ha añadido al Wordle.", ephemeral=True)
+            await interaction.followup.send(f"✅ La palabra **{palabra}** se ha añadido al Wordle.")
 
     @app_commands.command(name="intento", description="Envía un intento para el Wordle en curso")
     @app_commands.describe(palabra="Tu intento de 5 letras")
