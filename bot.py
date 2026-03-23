@@ -22,9 +22,12 @@ intents.presences = True
 
 bot = commands.Bot(command_prefix=CONFIG["bot"]["prefix"], intents=intents)
 bot.config = CONFIG
+<<<<<<< HEAD
 bot.api = APIClient(CONFIG.get("api", {}))
 print("DEBUG api config:", CONFIG.get("api", {}), flush=True)
 print("DEBUG bot.api creada:", bot.api, flush=True)
+=======
+>>>>>>> 25d46ae7094a14457a95176102a4ecdb2a66476d
 
 ACTIVITY_TYPES = {
     "watching": discord.ActivityType.watching,
@@ -368,9 +371,13 @@ async def apilogs_slash(interaction: discord.Interaction, limite: int = 5):
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
+<<<<<<< HEAD
 @bot.event
 async def on_close():
     await bot.api.close()
+=======
+
+>>>>>>> 25d46ae7094a14457a95176102a4ecdb2a66476d
 
 bot.run(CONFIG["bot"]["token"])
 
