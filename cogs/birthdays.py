@@ -22,7 +22,6 @@ def _load_full_config():
 _FULL_CONFIG = _load_full_config()
 TZ = ZoneInfo(_FULL_CONFIG.get("timezone", "Europe/Madrid"))
 DATE_FORMAT = "%d-%m"
-DATA_FILE = _FULL_CONFIG.get("archivos", {}).get("birthdays", "birthdays.json")
 
 
 async def usuario_autocomplete(interaction: discord.Interaction, current: str):
@@ -39,20 +38,6 @@ async def usuario_autocomplete(interaction: discord.Interaction, current: str):
             break
     return choices
 
-def _load_data():
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return {}
-    return {}
-
-def _save_data(d):
-    tmp = DATA_FILE + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(d, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, DATA_FILE)
 
 def _load_config():
     """Load guild-specific config from config.json."""
@@ -73,8 +58,7 @@ class Birthdays(commands.Cog):
         self.bot = bot
         self._task = None
         self._lock = asyncio.Lock()
-        self.data = _load_data()    # birthdays and last_sent per guild
-        self.config = _load_config()  # config: guild_id -> channel_id
+        self.config = _load_config()
 
     async def cog_load(self):
         self._task = asyncio.create_task(self._loop())
@@ -91,96 +75,80 @@ class Birthdays(commands.Cog):
         try:
             while True:
                 now = datetime.now(TZ).date()
-                send_ops = []
-                async with self._lock:
-                    for guild_id, gdata in list(self.data.items()):
-                        # prefer channel from config.json, fallback to gdata["channel_id"]
-                        cfg_channel = None
-                        guilds = self.config.get("guilds", {})
-                        if guild_id in guilds:
-                            guild_config = guilds[guild_id]
+                today_iso = now.isoformat()
+                day_month = now.strftime(DATE_FORMAT)
+
+                due_items = await self.bot.api.get_due_birthdays(
+                    today_iso=today_iso,
+                    day_month=day_month,
+                    limit=500
+                )
+
+                if due_items:
+                    grouped = {}
+                    for item in due_items:
+                        gid = int(item["guild_id"])
+                        grouped.setdefault(gid, []).append(item)
+
+                    for guild_id, matches in grouped.items():
+                        try:
+                            channel_id = None
+                            guilds = self.config.get("guilds", {})
+                            guild_config = guilds.get(str(guild_id), {})
                             if isinstance(guild_config, dict):
-                                cfg_channel = guild_config.get("birthdays")
-                        channel_id = cfg_channel or gdata.get("channel_id")
-                        if not channel_id:
-                            continue
-                        last_sent = gdata.get("last_sent")
-                        # evitar duplicados 
-                        if last_sent == now.isoformat():
-                            continue
-                        birthdays = gdata.get("birthdays", [])
-                        matches = []
-                        for b in birthdays:
-                            try:
-                                dt = datetime.strptime(b["date"], DATE_FORMAT).date()
-                            except Exception:
+                                channel_id = guild_config.get("birthdays")
+
+                            if not channel_id:
                                 continue
-                            if dt.month == now.month and dt.day == now.day:
-                                matches.append(b)
-                        if matches:
-                            send_ops.append((int(guild_id), int(channel_id), matches))
-                            gdata["last_sent"] = now.isoformat()
-                    if send_ops:
-                        _save_data(self.data)
-                # send messages out of lock
-                for guild_id, channel_id, matches in send_ops:
-                    try:
-                        channel = self.bot.get_channel(channel_id)
-                        mentions = " ".join(f"<@{m['user_id']}>" for m in matches)
-                        names = ", ".join(f"<@{m['user_id']}>" for m in matches)
-                        text = f"🎉 ¡Hoy es el cum-ple de {names}! 🎂\n{mentions}\n"
-                        if channel:
+
+                            channel = self.bot.get_channel(int(channel_id))
+                            if channel is None:
+                                try:
+                                    channel = await self.bot.fetch_channel(int(channel_id))
+                                except Exception:
+                                    continue
+
+                            mentions = " ".join(f"<@{m['user_id']}>" for m in matches)
+                            names = ", ".join(f"<@{m['user_id']}>" for m in matches)
+                            text = f"🎉 ¡Hoy es el cum-ple de {names}! 🎂\n{mentions}\n"
+
                             await channel.send(f"@everyone\n{text}")
-                    except Exception:
-                        pass
+
+                            await self.bot.api.update_birthday_state(
+                                guild_id=guild_id,
+                                last_sent=today_iso
+                            )
+                        except Exception as e:
+                            print(f"[BIRTHDAYS] Error enviando cumpleaños en guild {guild_id}: {e}", flush=True)
+
                 await asyncio.sleep(60)
         except asyncio.CancelledError:
             return
-
     # helpers 
     async def add_birthday(self, guild_id: int, user_id: int, date_str: str):
-        async with self._lock:
-            gid = str(guild_id)
-            if gid not in self.data:
-                self.data[gid] = {"channel_id": None, "birthdays": [], "last_sent": None}
-            b_list = self.data[gid].setdefault("birthdays", [])
-            for b in b_list:
-                if b["user_id"] == user_id:
-                    b["date"] = date_str
-                    _save_data(self.data)
-                    return b
-            newb = {"user_id": user_id, "date": date_str}
-            b_list.append(newb)
-            _save_data(self.data)
-            return newb
+        return await self.bot.api.create_or_update_birthday(
+            guild_id=guild_id,
+            user_id=user_id,
+            date_str=date_str
+        )
 
     async def list_user(self, guild_id: int, user_id: int):
-        async with self._lock:
-            gid = str(guild_id)
-            if gid not in self.data:
-                return []
-            return [b for b in self.data[gid].get("birthdays", []) if b["user_id"] == user_id]
+        items = await self.bot.api.get_birthdays(guild_id=guild_id, user_id=user_id, limit=50)
+        return items or []
 
     async def remove_birthday(self, guild_id: int, user_id: int):
-        async with self._lock:
-            gid = str(guild_id)
-            if gid not in self.data:
-                return False
-            before = len(self.data[gid].get("birthdays", []))
-            self.data[gid]["birthdays"] = [b for b in self.data[gid].get("birthdays", []) if b["user_id"] != user_id]
-            if len(self.data[gid]["birthdays"]) < before:
-                _save_data(self.data)
-                return True
-            return False
+        result = await self.bot.api.delete_birthday(guild_id, user_id)
+        return bool(result)
 
     async def set_channel(self, guild_id: int, channel_id: int):
         async with self._lock:
-            gid = str(guild_id)
-            if gid not in self.data:
-                self.data[gid] = {"channel_id": channel_id, "birthdays": [], "last_sent": None}
-            else:
-                self.data[gid]["channel_id"] = channel_id
-            _save_data(self.data)
+            guilds = self.config.setdefault("guilds", {})
+            guild_config = guilds.get(str(guild_id), {})
+            if not isinstance(guild_config, dict):
+                guild_config = {}
+            guild_config["birthdays"] = channel_id
+            guilds[str(guild_id)] = guild_config
+            _save_config(self.config)
 
 ACTIONS = [
     app_commands.Choice(name="add", value="add"),
@@ -293,12 +261,8 @@ async def cumple_command(
         return
 
     # VIEWALL
-    if act == "viewall":
-        gid = str(interaction.guild.id)
-        # leer de forma segura
-        async with cog._lock:
-            guild_data = cog.data.get(gid, {})
-            birthdays = guild_data.get("birthdays", [])
+        birthdays = await cog.bot.api.get_birthdays(guild_id=interaction.guild.id, limit=500)
+        birthdays = birthdays or []
 
         if not birthdays:
             await interaction.followup.send("No hay cumpleaños registrados en este servidor.", ephemeral=True)
