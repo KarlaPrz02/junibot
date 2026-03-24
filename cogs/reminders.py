@@ -1,7 +1,6 @@
 import asyncio
-import json
-import os
 import uuid
+import json
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import discord
@@ -19,24 +18,8 @@ def _load_bot_config():
         return {}
 
 _CONFIG = _load_bot_config()
-REMINDERS_FILE = _CONFIG.get("archivos", {}).get("reminders", "reminders.json")
 TZ = ZoneInfo(_CONFIG.get("timezone", "Europe/Madrid"))
 DATE_FORMAT = "%d-%m-%Y %H:%M"  
-
-def _load_reminders():
-    if os.path.exists(REMINDERS_FILE):
-        try:
-            with open(REMINDERS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
-
-def _save_reminders(data):
-    tmp = REMINDERS_FILE + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, REMINDERS_FILE)
 
 def parse_datetime(text: str):
     """
@@ -57,7 +40,6 @@ class Reminders(commands.Cog):
         self.bot = bot
         self._task = None
         self._lock = asyncio.Lock()
-        self.reminders = _load_reminders()
 
     async def cog_load(self):
         # start background task
@@ -75,93 +57,95 @@ class Reminders(commands.Cog):
     async def _reminder_loop(self):
         try:
             while True:
-                now = datetime.now(TZ)
-                to_send = []
-                async with self._lock:
-                    remaining = []
-                    for r in self.reminders:
-                        due = datetime.fromisoformat(r["time"])
-                        if due.tzinfo is None:
-                            due = due.replace(tzinfo=TZ)
-                        if due <= now:
-                            # Determine recurrence behavior
-                            repeat = r.get("repeat", "once")
-                            interval = int(r.get("interval", 1) or 1)
-                            if repeat == "once":
-                                # one-time reminder: send and do not reschedule
-                                to_send.append(r)
+                pendientes = await self.bot.api.get_pending_reminders(limit=100)
+
+                if pendientes:
+                    now = datetime.now(TZ)
+
+                    for r in pendientes:
+                        try:
+                            due = datetime.fromisoformat(r["remind_at"])
+                            if due.tzinfo is None:
+                                due = due.replace(tzinfo=TZ)
                             else:
-                                # recurring: compute next due date
+                                due = due.astimezone(TZ)
+
+                            channel = self.bot.get_channel(r.get("channel_id")) if r.get("channel_id") is not None else None
+                            user = await self.bot.fetch_user(r["user_id"])
+                            mention = f"<@{r['user_id']}>"
+                            text = r["message"]
+
+                            if channel:
+                                await channel.send(f"⏰ {mention} — Recordatorio: {text}")
+                            elif user:
+                                await user.send(f"⏰ Recordatorio: {text}")
+
+                            repeat = r.get("repeat_type", "once")
+                            interval = int(r.get("interval_days", 1) or 1)
+
+                            if repeat == "once":
+                                await self.bot.api.delete_reminder(r["id"])
+                            else:
                                 if repeat == "daily":
                                     step = timedelta(days=1)
                                 else:
-                                    # custom uses 'interval' days
                                     step = timedelta(days=interval)
+
                                 next_due = due + step
-                                # if missed many occurrences, fast-forward to next future
                                 while next_due <= now:
                                     next_due += step
-                                # update the reminder time and keep
-                                new_r = dict(r)
-                                new_r["time"] = next_due.isoformat()
-                                remaining.append(new_r)
-                                to_send.append(r)
-                        else:
-                            remaining.append(r)
-                    if to_send:
-                        # remove the ones to send
-                        self.reminders = remaining
-                        _save_reminders(self.reminders)
-                # send outside lock
-                for r in to_send:
-                    try:
-                        channel = self.bot.get_channel(r.get("channel_id")) if r.get("channel_id") is not None else None
-                        user = await self.bot.fetch_user(r["user_id"])
-                        mention = f"<@{r['user_id']}>"
-                        text = r["message"]
-                        if channel:
-                            await channel.send(f"⏰ {mention} — Recordatorio: {text}")
-                        else:
-                            # try DM
-                            if user:
-                                await user.send(f"⏰ Recordatorio: {text}")
-                    except Exception:
-                        pass
+
+                                await self.bot.api.update_reminder(
+                                    r["id"],
+                                    remind_at=next_due.isoformat()
+                                )
+
+                        except Exception as e:
+                            print(f"[REMINDERS] Error procesando reminder {r.get('id')}: {e}", flush=True)
+
                 await asyncio.sleep(30)
         except asyncio.CancelledError:
             return
 
-    async def add_reminder(self, user_id: int, channel_id: Optional[int], time_dt: datetime, message: str, guild_id: Optional[int] = None):
-        r = {
-            "id": str(uuid.uuid4())[:8],
-            "user_id": user_id,
-            "channel_id": channel_id,
-            "guild_id": guild_id,
-            "time": time_dt.isoformat(),
-            "message": message,
-            "repeat": "once",
-            "interval": 1,
-            "created_at": datetime.now(TZ).isoformat()
-        }
-        async with self._lock:
-            self.reminders.append(r)
-            # mantener orden por tiempo
-            self.reminders.sort(key=lambda x: x["time"])
-            _save_reminders(self.reminders)
-        return r
+    async def add_reminder(
+        self,
+        user_id: int,
+        channel_id: Optional[int],
+        time_dt: datetime,
+        message: str,
+        guild_id: Optional[int] = None,
+        repeat_type: str = "once",
+        interval_days: int = 1,
+    ):
+        reminder_id = str(uuid.uuid4())[:8]
+
+        result = await self.bot.api.create_reminder(
+            reminder_id=reminder_id,
+            user_id=user_id,
+            channel_id=channel_id,
+            guild_id=guild_id,
+            remind_at=time_dt.isoformat(),
+            message=message,
+            repeat_type=repeat_type,
+            interval_days=interval_days,
+        )
+        return result
 
     async def list_user(self, user_id: int):
-        async with self._lock:
-            return [r for r in self.reminders if r["user_id"] == user_id]
+        items = await self.bot.api.get_reminders(user_id=user_id, limit=100)
+        return items or []
 
     async def remove_by_id(self, user_id: int, rid: str):
-        async with self._lock:
-            before = len(self.reminders)
-            self.reminders = [r for r in self.reminders if not (r["id"] == rid and r["user_id"] == user_id)]
-            if len(self.reminders) < before:
-                _save_reminders(self.reminders)
-                return True
+        items = await self.bot.api.get_reminders(user_id=user_id, limit=200)
+        if not items:
             return False
+
+        target = next((r for r in items if r["id"] == rid and r["user_id"] == user_id), None)
+        if not target:
+            return False
+
+        result = await self.bot.api.delete_reminder(rid)
+        return bool(result)
 
 # /recordatorio command
 
@@ -221,14 +205,15 @@ class ReminderModal(discord.ui.Modal):
 
         guild_id = getattr(interaction.guild, "id", None)
         # create reminder (use provided channel if available)
-        r = await self.cog.add_reminder(interaction.user.id, self.channel_id, dt, texto_text, guild_id)
-        async with self.cog._lock:
-            for item in self.cog.reminders:
-                if item["id"] == r["id"]:
-                    item["repeat"] = repeat_text
-                    item["interval"] = interval
-                    break
-            _save_reminders(self.cog.reminders)
+        r = await self.cog.add_reminder(
+            interaction.user.id,
+            self.channel_id,
+            dt,
+            texto_text,
+            guild_id,
+            repeat_type=repeat_text,
+            interval_days=interval
+        )
 
         await interaction.response.send_message(f"Recordatorio creado (id: `{r['id']}`) para {dt.strftime(DATE_FORMAT)}. Repetición: {repeat_text}", ephemeral=True)
 
@@ -302,15 +287,15 @@ async def recordatorio_command(
             return
         guild_id = getattr(interaction.guild, "id", None)
         channel_id = interaction.channel.id if interaction.channel else None
-        r = await cog.add_reminder(interaction.user.id, channel_id, dt, texto, guild_id)
-        # update repeat fields after creation (thread-safe)
-        async with cog._lock:
-            for item in cog.reminders:
-                if item["id"] == r["id"]:
-                    item["repeat"] = rtype
-                    item["interval"] = interval
-                    break
-            _save_reminders(cog.reminders)
+        r = await cog.add_reminder(
+            interaction.user.id,
+            channel_id,
+            dt,
+            texto,
+            guild_id,
+            repeat_type=rtype,
+            interval_days=interval
+        )
         await interaction.followup.send(f"Recordatorio creado (id: `{r['id']}`) para {dt.strftime(DATE_FORMAT)}. Repetición: {rtype}{(' cada '+str(interval)+' días') if rtype=='custom' else ''}", ephemeral=True)
         return
 
@@ -322,10 +307,10 @@ async def recordatorio_command(
             return
         lines = []
         for r in items:
-            dt = datetime.fromisoformat(r["time"]).astimezone(TZ)
+            dt = datetime.fromisoformat(r["remind_at"]).astimezone(TZ)
             ch = f"<#{r['channel_id']}>" if r.get("channel_id") else "DM"
-            rtype = r.get("repeat", "once")
-            interval = int(r.get("interval", 1) or 1)
+            rtype = r.get("repeat_type", "once")
+            interval = int(r.get("interval_days", 1) or 1)
             rep_text = rtype if rtype != "custom" else f"custom every {interval}d"
             lines.append(f"`{r['id']}` — {dt.strftime(DATE_FORMAT)} — {ch} — {r['message']} — {rep_text}")
         text = "\n".join(lines)
