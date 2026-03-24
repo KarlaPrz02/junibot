@@ -712,9 +712,13 @@ def create_app():
 
     @app.route("/")
     def index():
+        return redirect(url_for("games_hub"))
+
+    @app.route("/crossword")
+    def crossword_page():
         crossword = session.get("crossword")
         if crossword is None:
-            return redirect(url_for("start"))
+            return redirect(url_for("games_hub"))
         # Si el crucigrama semanal es de otra semana (hora España), reiniciar
         if crossword.get("mode") != "quick":
             today_spain = datetime.now(TZ).date()
@@ -764,7 +768,7 @@ def create_app():
         session["solved"] = []
         session["attempts"] = {}
         session["message"] = "Crucigrama semanal iniciado."
-        return redirect(url_for("index"))
+        return redirect(url_for("crossword_page"))
 
     @app.route("/start/random")
     def start_random():
@@ -775,7 +779,7 @@ def create_app():
         session["solved"] = []
         session["attempts"] = {}
         session["message"] = "Crucigrama aleatorio iniciado."
-        return redirect(url_for("index"))
+        return redirect(url_for("crossword_page"))
 
     @app.route("/start/quick")
     def start_quick():
@@ -785,7 +789,7 @@ def create_app():
         session["attempts"] = {}
         session["quick_start"] = datetime.now(TZ).isoformat()
         session["message"] = "Partida rápida iniciada. ¡Tienes 15 minutos!"
-        return redirect(url_for("index"))
+        return redirect(url_for("crossword_page"))
 
     @app.route("/guess", methods=["POST"])
     def guess():
@@ -798,7 +802,7 @@ def create_app():
                 elapsed = (datetime.now(TZ) - datetime.fromisoformat(qs)).total_seconds()
                 if elapsed >= 15 * 60:
                     session["message"] = "⏰ ¡Se acabó el tiempo!"
-                    return redirect(url_for("index"))
+                    return redirect(url_for("crossword_page"))
         try:
             numero = int(request.form.get("numero", "0"))
         except ValueError:
@@ -807,10 +811,10 @@ def create_app():
         clue = next((c for c in crossword["clues"] if c["numero"] == numero), None)
         if clue is None:
             session["message"] = "Número de pista inválido."
-            return redirect(url_for("index"))
+            return redirect(url_for("crossword_page"))
         if len(palabra) != len(clue["answer"]):
             session["message"] = f"La respuesta debe tener {len(clue['answer'])} letras."
-            return redirect(url_for("index"))
+            return redirect(url_for("crossword_page"))
 
         attempts = session.setdefault("attempts", {})
         attempts.setdefault(str(numero), []).append(palabra)
@@ -831,7 +835,7 @@ def create_app():
             session.pop("solved", None)
             session.pop("attempts", None)
 
-        return redirect(url_for("index"))
+        return redirect(url_for("crossword_page"))
     
     @app.route("/api-dashboard")
     def api_dashboard():
