@@ -5,6 +5,9 @@ from collections import deque
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 from flask import Flask, session, render_template, request, redirect, url_for, jsonify
+import urllib.request
+import urllib.parse
+import urllib.error
 
 def _load_bot_config():
     try:
@@ -16,6 +19,8 @@ def _load_bot_config():
 _CONFIG = _load_bot_config()
 TZ = ZoneInfo(_CONFIG.get("timezone", "Europe/Madrid"))
 WORDS_FILE = _CONFIG.get("archivos", {}).get("crucigrama", "crucigrama.json")
+
+API_BASE_URL = _CONFIG.get("api", {}).get("base_url", "http://127.0.0.1:8000").rstrip("/")
 
 DEFAULT_CROSSWORD_ENTRIES = [
     {"clue": "Planeta conocido como el planeta rojo", "answer": "marte"},
@@ -658,6 +663,21 @@ def render_crossword_board(crossword, solved, attempts):
 
 DISCORD_CLIENT_ID = "449903611128971275"
 
+def api_get_json(endpoint: str, params: dict | None = None):
+    url = f"{API_BASE_URL}{endpoint}"
+    if params:
+        url += "?" + urllib.parse.urlencode(params)
+
+    try:
+        with urllib.request.urlopen(url, timeout=3) as resp:
+            return json.loads(resp.read().decode("utf-8")), None
+    except urllib.error.HTTPError as e:
+        return None, f"HTTP {e.code}"
+    except urllib.error.URLError as e:
+        return None, str(e.reason)
+    except Exception as e:
+        return None, str(e)
+
 def create_app():
     app = Flask(__name__)
     app.secret_key = os.urandom(24)
@@ -804,9 +824,26 @@ def create_app():
             session.pop("attempts", None)
 
         return redirect(url_for("index"))
+    
+    @app.route("/api-dashboard")
+    def api_dashboard():
+        status_data, status_error = api_get_json("/status")
+        stats_data, stats_error = api_get_json("/stats")
+        logs_data, logs_error = api_get_json("/logs", {"limit": 10, "source": "juni-bot"})
+
+        return render_template(
+            "api_dashboard.html",
+            api_base_url=API_BASE_URL,
+            status_data=status_data,
+            stats_data=stats_data or {"total_logs": 0, "by_level": []},
+            logs_data=logs_data or [],
+            status_error=status_error,
+            stats_error=stats_error,
+            logs_error=logs_error,
+        )
 
     return app
 
 
 if __name__ == "__main__":
-    create_app().run(debug=True, port=5000)
+    create_app().run(host="0.0.0.0", port=5000, debug=True)

@@ -26,7 +26,6 @@ bot.api = APIClient(CONFIG.get("api", {}))
 print("DEBUG api config:", CONFIG.get("api", {}), flush=True)
 print("DEBUG bot.api creada:", bot.api, flush=True)
 
-
 ACTIVITY_TYPES = {
     "watching": discord.ActivityType.watching,
     "playing": discord.ActivityType.playing,
@@ -367,11 +366,11 @@ async def apilogs_slash(interaction: discord.Interaction, limite: int = 5):
     embed.set_footer(text="Datos leídos desde FastAPI")
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
-    
+
+
 @bot.event
 async def on_close():
     await bot.api.close()
-
 
 bot.run(CONFIG["bot"]["token"])
 

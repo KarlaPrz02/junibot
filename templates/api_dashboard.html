@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>API Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#111827; color:#e5e7eb; margin:0; padding:24px; }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    .card { background:#1f2937; border-radius:16px; padding:18px; margin-bottom:16px; }
+    .ok { color:#22c55e; font-weight:bold; }
+    .bad { color:#ef4444; font-weight:bold; }
+    .muted { color:#9ca3af; }
+    .tag { background:#374151; border-radius:999px; padding:2px 8px; font-size:12px; }
+    code { background:#0b1220; padding:2px 6px; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>📊 JuniBot API Dashboard</h1>
+      <div class="muted">API: <code>{{ api_base_url }}</code></div>
+    </div>
+
+    <div class="card">
+      <h2>Estado</h2>
+      {% if status_data %}
+        <div class="ok">✅ API conectada</div>
+        <div class="muted">service={{ status_data.service }} · status={{ status_data.status }}</div>
+      {% else %}
+        <div class="bad">❌ API no disponible</div>
+        <div class="muted">{{ status_error }}</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Stats</h2>
+      <p>Total logs: <strong>{{ stats_data.total_logs }}</strong></p>
+      {% if stats_data.by_level %}
+        <ul>
+          {% for item in stats_data.by_level %}
+            <li><strong>{{ item.level }}</strong>: {{ item.total }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">Sin datos.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Últimos logs de JuniBot</h2>
+      {% if logs_data %}
+        {% for log in logs_data %}
+          <div style="padding:10px 0; border-bottom:1px solid #374151;">
+            <div><strong>#{{ log.id }}</strong> [{{ log.level }}] <span class="tag">{{ log.tag }}</span></div>
+            <div>{{ log.message }}</div>
+            <div class="muted">{{ log.created_at }}</div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No hay logs.</p>
+      {% endif %}
+      {% if logs_error %}
+        <p class="bad">{{ logs_error }}</p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
