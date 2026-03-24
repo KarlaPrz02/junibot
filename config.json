@@ -1,6 +1,6 @@
 {
   "bot": {
-    "token": "your_token_here",
+    "token": "TU_TOKEN_AQUI",
     "prefix": "!",
     "status": "online",
     "activity": {

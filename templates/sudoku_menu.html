@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Crucigrama Web</title>
+  <title>Sudoku</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -20,16 +20,10 @@
     .container { width: min(26rem, calc(100vw - 2rem)); background: var(--panel); border: 1px solid var(--border); border-radius: 0.75rem; box-shadow: 0 10px 35px var(--shadow); padding: 1.2rem; }
     .actions { display: grid; gap: 0.65rem; }
     .button {
-      display: block;
-      width: 100%;
-      text-align: center;
-      padding: 0.75rem 0.9rem;
-      border-radius: 0.5rem;
-      text-decoration: none;
-      font-weight: 700;
-      color: white;
-      background: var(--primary);
-      border: 1px solid transparent;
+      display: block; width: 100%; text-align: center;
+      padding: 0.75rem 0.9rem; border-radius: 0.5rem;
+      text-decoration: none; font-weight: 700; color: white;
+      background: var(--primary); border: 1px solid transparent;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     .button:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--shadow); }
@@ -40,28 +34,12 @@
     #loading-overlay.hidden { display: none; }
     .spinner { width: 2rem; height: 2rem; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Mobile layout ── */
     @media (max-width: 600px) {
       body { padding: 0; align-items: stretch; }
-      .container {
-        width: 100%;
-        min-height: 100vh;
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 1.5rem 1.2rem;
-      }
+      .container { width: 100%; min-height: 100vh; border: none; border-radius: 0; box-shadow: none; display: flex; flex-direction: column; justify-content: center; padding: 1.5rem 1.2rem; }
       h1 { font-size: 1.5rem; }
       .subtitle { font-size: 0.85rem; }
-      .button {
-        padding: 1rem;
-        font-size: 1.05rem;
-        border-radius: 0.65rem;
-      }
+      .button { padding: 1rem; font-size: 1.05rem; border-radius: 0.65rem; }
       .actions { gap: 0.85rem; }
     }
   </style>
@@ -69,12 +47,12 @@
 <body>
   <div id="loading-overlay"><div class="spinner"></div></div>
   <main class="container" style="display:none;" id="app-container">
-    <h1>Crucigrama</h1>
-    <p class="subtitle">Un diseño sencillo, enfoque en el juego y nada que distraiga.</p>
+    <h1>Sudoku</h1>
+    <p class="subtitle">Rellena la cuadrícula 9×9 con los números del 1 al 9.</p>
     <div class="actions">
-      <a class="button" href="{{ url_for('start_daily') }}">Semanal</a>
-      <a class="button" href="{{ url_for('start_quick') }}" style="background: var(--accent);">Partida rápida</a>
-      <a class="button secondary" href="{{ url_for('start_random') }}">Aleatorio</a>
+      <a class="button" href="{{ url_for('sudoku_start_game', difficulty='facil') }}">Fácil</a>
+      <a class="button" href="{{ url_for('sudoku_start_game', difficulty='medio') }}" style="background: var(--accent);">Medio</a>
+      <a class="button secondary" href="{{ url_for('sudoku_start_game', difficulty='dificil') }}">Difícil</a>
     </div>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1/dist/index.global.js"></script>
@@ -89,9 +67,7 @@
           const sdk = new window.DiscordSDK('{{ discord_client_id }}');
           await sdk.ready();
         }
-      } catch(e) {
-        console.log('Discord SDK error:', e);
-      }
+      } catch(e) { console.log('Discord SDK error:', e); }
       clearTimeout(timer);
       show();
     })();

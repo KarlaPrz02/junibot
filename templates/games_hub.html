@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Juni Games</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #0f172a;
+      --panel: #f8fafc;
+      --border: #e2e8f0;
+      --primary: #3b82f6;
+      --accent: #0f766e;
+      --shadow: rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font-family: Inter, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    h1 { font-size: 1.8rem; margin: 0 0 0.3rem; text-align: center; font-weight: 700; letter-spacing: 0.02em; }
+    .container { width: min(26rem, calc(100vw - 2rem)); background: var(--panel); border: 1px solid var(--border); border-radius: 0.75rem; box-shadow: 0 10px 35px var(--shadow); padding: 1.4rem; }
+    .subtitle { margin: 0 0 1.2rem; font-size: 0.92rem; color: #64748b; text-align: center; }
+    .games { display: grid; gap: 0.75rem; }
+    .game-card {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem 1.1rem; border-radius: 0.65rem;
+      text-decoration: none; color: var(--text);
+      border: 1px solid var(--border);
+      background: #fff;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .game-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--shadow); border-color: var(--primary); }
+    .game-card:active { transform: translateY(0); }
+    .game-icon { font-size: 2rem; flex-shrink: 0; width: 2.8rem; text-align: center; }
+    .game-info h2 { margin: 0 0 0.15rem; font-size: 1.05rem; font-weight: 700; }
+    .game-info p { margin: 0; font-size: 0.82rem; color: #64748b; }
+
+    #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    #loading-overlay.hidden { display: none; }
+    .spinner { width: 2rem; height: 2rem; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      body { padding: 0; align-items: stretch; }
+      .container { width: 100%; min-height: 100vh; border: none; border-radius: 0; box-shadow: none; display: flex; flex-direction: column; justify-content: center; padding: 1.5rem 1.2rem; }
+      h1 { font-size: 1.5rem; }
+      .game-card { padding: 0.85rem 1rem; }
+      .game-icon { font-size: 1.7rem; width: 2.2rem; }
+      .game-info h2 { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-overlay"><div class="spinner"></div></div>
+  <main class="container" style="display:none;" id="app-container">
+    <h1>Juni Games</h1>
+    <p class="subtitle">Elige un juego para empezar a jugar.</p>
+    <div class="games">
+      <a class="game-card" href="{{ url_for('start') }}">
+        <span class="game-icon">🧩</span>
+        <div class="game-info">
+          <h2>Crucigrama</h2>
+          <p>Resuelve pistas y completa la cuadrícula.</p>
+        </div>
+      </a>
+      <a class="game-card" href="{{ url_for('sudoku_menu') }}">
+        <span class="game-icon">🔢</span>
+        <div class="game-info">
+          <h2>Sudoku</h2>
+          <p>Rellena la cuadrícula 9×9 con los números del 1 al 9.</p>
+        </div>
+      </a>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1/dist/index.global.js"></script>
+  <script>
+    (async function() {
+      const overlay = document.getElementById('loading-overlay');
+      const container = document.getElementById('app-container');
+      function show() { overlay.classList.add('hidden'); container.style.display = ''; }
+      // Timeout: show UI after 3s even if SDK hangs
+      const timer = setTimeout(show, 3000);
+      try {
+        if (window.DiscordSDK) {
+          const sdk = new window.DiscordSDK('{{ discord_client_id }}');
+          await sdk.ready();
+        }
+      } catch(e) { console.log('Discord SDK error:', e); }
+      clearTimeout(timer);
+      show();
+    })();
+  </script>
+</body>
+</html>

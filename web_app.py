@@ -8,6 +8,7 @@ from flask import Flask, session, render_template, request, redirect, url_for, j
 import urllib.request
 import urllib.parse
 import urllib.error
+from sudoku_engine import generate_puzzle as _sudoku_generate
 
 def _load_bot_config():
     try:
@@ -689,6 +690,9 @@ def create_app():
             "frame-ancestors 'self' https://discord.com https://*.discord.com https://*.discordsays.com"
         )
         response.headers.pop("X-Frame-Options", None)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
         return response
 
     @app.route("/api/token", methods=["POST"])
@@ -701,6 +705,10 @@ def create_app():
         # Return the code — the SDK handles the actual token exchange client-side
         # For Activities, the SDK's authorize() + authenticate() flow is self-contained
         return jsonify({"code": code})
+
+    @app.route("/games")
+    def games_hub():
+        return render_template("games_hub.html", discord_client_id=DISCORD_CLIENT_ID)
 
     @app.route("/")
     def index():
@@ -840,6 +848,48 @@ def create_app():
             status_error=status_error,
             stats_error=stats_error,
             logs_error=logs_error,
+        )
+
+    # ===================================================================
+    # SUDOKU — rutas completamente independientes del crucigrama
+    # ===================================================================
+    SUDOKU_DIFFICULTIES = {"facil": "Fácil", "medio": "Medio", "dificil": "Difícil"}
+
+    @app.route("/sudoku")
+    def sudoku_menu():
+        return render_template("sudoku_menu.html", discord_client_id=DISCORD_CLIENT_ID)
+
+    @app.route("/sudoku/start/<difficulty>")
+    def sudoku_start_game(difficulty):
+        if difficulty not in SUDOKU_DIFFICULTIES:
+            difficulty = "medio"
+        puzzle, sol = _sudoku_generate(difficulty)
+        session["sudoku_puzzle"] = puzzle
+        session["sudoku_solution"] = sol
+        session["sudoku_board"] = [row[:] for row in puzzle]
+        session["sudoku_given"] = [[1 if puzzle[r][c] != 0 else 0 for c in range(9)] for r in range(9)]
+        session["sudoku_difficulty"] = difficulty
+        return redirect(url_for("sudoku_play"))
+
+    @app.route("/sudoku/play")
+    def sudoku_play():
+        board = session.get("sudoku_board")
+        if board is None:
+            return redirect(url_for("sudoku_menu"))
+        sol = session.get("sudoku_solution", [[0]*9]*9)
+        given = session.get("sudoku_given", [[0]*9]*9)
+        diff = session.get("sudoku_difficulty", "medio")
+        empty_count = sum(1 for r in range(9) for c in range(9) if given[r][c] == 0)
+        return render_template(
+            "sudoku.html",
+            board=board,
+            solution=sol,
+            given=given,
+            difficulty_label=SUDOKU_DIFFICULTIES.get(diff, "Medio"),
+            empty_count=empty_count,
+            message=session.pop("sudoku_message", None),
+            message_type=session.pop("sudoku_message_type", "info"),
+            discord_client_id=DISCORD_CLIENT_ID,
         )
 
     return app

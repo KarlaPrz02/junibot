@@ -511,16 +511,18 @@
     (async function() {
       const overlay = document.getElementById('loading-overlay');
       const container = document.getElementById('app-container');
+      function show() { overlay.classList.add('hidden'); container.style.display = ''; }
+      const timer = setTimeout(show, 3000);
       try {
         if (window.DiscordSDK) {
           const sdk = new window.DiscordSDK('{{ discord_client_id }}');
           await sdk.ready();
         }
       } catch(e) {
-        console.log('Discord SDK not available (running outside Discord):', e);
+        console.log('Discord SDK error:', e);
       }
-      overlay.classList.add('hidden');
-      container.style.display = '';
+      clearTimeout(timer);
+      show();
     })();
   </script>
 </body>

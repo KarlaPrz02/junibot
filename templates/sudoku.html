@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Sudoku</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #0f172a;
+      --panel: #f8fafc;
+      --border: #e2e8f0;
+      --muted: #64748b;
+      --primary: #3b82f6;
+      --accent: #0f766e;
+      --shadow: rgba(15, 23, 42, 0.08);
+      --cell-size: min(2.8rem, calc((100vw - 4rem) / 9));
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font-family: Inter, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; padding: 2rem; }
+    .container { width: min(100%, 32rem); background: var(--panel); border: 1px solid var(--border); border-radius: 0.75rem; box-shadow: 0 10px 35px var(--shadow); padding: 1.2rem 1.2rem 1.55rem; }
+    h1 { margin: 0 0 0.15rem; font-size: 1.8rem; font-weight: 700; text-align: center; }
+    .subtitle { margin: 0 0 0.8rem; color: var(--muted); font-size: 0.92rem; text-align: center; }
+    .message { border-radius: 0.5rem; padding: 0.7rem 0.9rem; margin-bottom: 0.8rem; font-weight: 600; text-align: center; }
+    .message.info { background: #e0f2fe; border: 1px solid #bae6fd; color: #0c4a6e; }
+    .message.success { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
+    .message.error { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
+
+    /* ── Board ── */
+    .sudoku-board {
+      display: grid;
+      grid-template-columns: repeat(9, var(--cell-size));
+      grid-template-rows: repeat(9, var(--cell-size));
+      gap: 0;
+      margin: 0 auto 0.8rem;
+      width: fit-content;
+      border: 2.5px solid #1e293b;
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+    .cell {
+      width: var(--cell-size); height: var(--cell-size);
+      display: flex; align-items: center; justify-content: center;
+      font-size: calc(var(--cell-size) * 0.48);
+      font-weight: 700;
+      border: 0.5px solid #cbd5e1;
+      background: #fff;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.12s;
+      user-select: none;
+    }
+    /* Thick borders for 3×3 boxes */
+    .cell[data-c="2"], .cell[data-c="5"] { border-right: 2px solid #1e293b; }
+    .cell[data-r="2"], .cell[data-r="5"] { border-bottom: 2px solid #1e293b; }
+
+    .cell.given { background: #f1f5f9; color: #0f172a; cursor: default; }
+    .cell.selected { background: #dbeafe; outline: 2px solid var(--primary); outline-offset: -2px; z-index: 1; }
+    .cell.highlight { background: #eff6ff; }
+    .cell.same-num { background: #e0f2fe; }
+    .cell.wrong { color: #dc2626; }
+    .cell.correct-anim { animation: pop-green 0.5s ease; }
+    @keyframes pop-green {
+      0% { background: #dcfce7; transform: scale(1); }
+      40% { background: #16a34a; color: #fff; transform: scale(1.12); }
+      100% { background: #fff; transform: scale(1); }
+    }
+    .cell .pencil-marks {
+      position: absolute; inset: 0;
+      display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+      font-size: calc(var(--cell-size) * 0.22);
+      font-weight: 500; color: #64748b;
+      pointer-events: none;
+    }
+    .cell .pencil-marks span { display: flex; align-items: center; justify-content: center; }
+
+    /* ── Number pad ── */
+    .numpad {
+      display: grid; grid-template-columns: repeat(9, 1fr);
+      gap: 0.3rem; margin: 0.6rem auto 0;
+      max-width: calc(var(--cell-size) * 9 + 2.4rem);
+    }
+    .numpad button {
+      width: 100%; aspect-ratio: 1;
+      border: 1px solid var(--border); border-radius: 0.4rem;
+      background: #fff; color: var(--text);
+      font-size: 1.15rem; font-weight: 700;
+      cursor: pointer;
+      transition: background 0.12s, transform 0.1s;
+    }
+    .numpad button:hover { background: #e0f2fe; transform: translateY(-1px); }
+    .numpad button:active { transform: translateY(0); }
+    .numpad button.exhausted { opacity: 0.3; pointer-events: none; }
+
+    /* ── Controls row ── */
+    .controls-row {
+      display: flex; gap: 0.5rem; justify-content: center;
+      margin: 0.7rem 0 0.3rem; flex-wrap: wrap;
+    }
+    .ctrl-btn {
+      padding: 0.5rem 1rem; border: 1px solid var(--border);
+      border-radius: 0.4rem; background: #fff; color: var(--text);
+      font-weight: 600; font-size: 0.88rem; cursor: pointer;
+      transition: background 0.12s;
+    }
+    .ctrl-btn:hover { background: #f1f5f9; }
+    .ctrl-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .status { color: var(--muted); margin-top: 0.6rem; font-size: 0.88rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; }
+    .link { text-decoration: none; color: var(--primary); font-weight: 600; }
+    .link:hover { text-decoration: underline; }
+
+    #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    #loading-overlay.hidden { display: none; }
+    .spinner { width: 2rem; height: 2rem; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      :root { --cell-size: calc((100vw - 2rem) / 9); }
+      body { padding: 0; align-items: flex-start; }
+      .container { width: 100%; border: none; border-radius: 0; box-shadow: none; padding: 0.75rem 0.65rem 1.2rem; }
+      h1 { font-size: 1.25rem; }
+      .subtitle { font-size: 0.8rem; margin-bottom: 0.5rem; }
+      .numpad { max-width: 100%; }
+      .numpad button { font-size: 1rem; }
+      .status { flex-direction: column; gap: 0.2rem; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-overlay"><div class="spinner"></div></div>
+  <main class="container" style="display:none;" id="app-container">
+    <h1>Sudoku</h1>
+    <p class="subtitle">Dificultad: {{ difficulty_label }} · Casillas vacías: {{ empty_count }}</p>
+
+    {% if message %}
+      <div class="message {{ message_type or 'info' }}">{{ message }}</div>
+    {% endif %}
+
+    <div class="sudoku-board" id="board">
+      {% for r in range(9) %}
+        {% for c in range(9) %}
+          {% set val = board[r][c] %}
+          {% set is_given = given[r][c] %}
+          <div class="cell{% if is_given %} given{% endif %}"
+               data-r="{{ r }}" data-c="{{ c }}"
+               data-given="{{ '1' if is_given else '0' }}"
+               data-val="{{ val if val != 0 else '' }}">
+            {% if val != 0 %}{{ val }}{% endif %}
+          </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+
+    <div class="controls-row">
+      <button class="ctrl-btn" id="btn-pencil" title="Modo notas">✏️ Notas</button>
+      <button class="ctrl-btn" id="btn-erase" title="Borrar celda">🗑️ Borrar</button>
+      <button class="ctrl-btn" id="btn-undo" title="Deshacer">↩️ Deshacer</button>
+    </div>
+
+    <div class="numpad" id="numpad">
+      {% for n in range(1, 10) %}
+        <button data-num="{{ n }}">{{ n }}</button>
+      {% endfor %}
+    </div>
+
+    <div class="status">
+      <p id="status-text">Completadas: <span id="filled-count">0</span> / 81</p>
+      <p><a class="link" href="{{ url_for('sudoku_menu') }}">Nuevo juego</a></p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1/dist/index.global.js"></script>
+  <script>
+    /* ── State ── */
+    const solution = {{ solution|tojson }};
+    let pencilMode = false;
+    let selectedR = -1, selectedC = -1;
+    const history = [];          // undo stack: [{r, c, prevVal, prevPencil}]
+    const pencilMarks = {};      // "r,c" → Set of numbers
+
+    /* ── DOM refs ── */
+    const boardEl = document.getElementById('board');
+    const numpadEl = document.getElementById('numpad');
+    const btnPencil = document.getElementById('btn-pencil');
+    const btnErase = document.getElementById('btn-erase');
+    const btnUndo = document.getElementById('btn-undo');
+    const filledSpan = document.getElementById('filled-count');
+
+    function getCell(r, c) { return boardEl.querySelector(`.cell[data-r='${r}'][data-c='${c}']`); }
+
+    function countFilled() {
+      let n = 0;
+      boardEl.querySelectorAll('.cell').forEach(el => { if (el.dataset.val) n++; });
+      return n;
+    }
+
+    function updateFilledCount() { filledSpan.textContent = countFilled(); }
+
+    function updateExhausted() {
+      const counts = {};
+      for (let d = 1; d <= 9; d++) counts[d] = 0;
+      boardEl.querySelectorAll('.cell').forEach(el => {
+        const v = parseInt(el.dataset.val);
+        if (v >= 1 && v <= 9) counts[v]++;
+      });
+      numpadEl.querySelectorAll('button').forEach(btn => {
+        const d = parseInt(btn.dataset.num);
+        btn.classList.toggle('exhausted', counts[d] >= 9);
+      });
+    }
+
+    /* ── Selection & highlights ── */
+    function selectCell(r, c) {
+      boardEl.querySelectorAll('.cell').forEach(el => el.classList.remove('selected', 'highlight', 'same-num'));
+      selectedR = r; selectedC = c;
+      const sel = getCell(r, c);
+      if (!sel) return;
+      sel.classList.add('selected');
+
+      // Highlight row, column, box
+      boardEl.querySelectorAll('.cell').forEach(el => {
+        const er = +el.dataset.r, ec = +el.dataset.c;
+        if (er === r || ec === c || (Math.floor(er/3) === Math.floor(r/3) && Math.floor(ec/3) === Math.floor(c/3))) {
+          el.classList.add('highlight');
+        }
+      });
+
+      // Highlight same number
+      const val = sel.dataset.val;
+      if (val) {
+        boardEl.querySelectorAll('.cell').forEach(el => {
+          if (el.dataset.val === val) el.classList.add('same-num');
+        });
+      }
+    }
+
+    /* ── Place number ── */
+    function placeNumber(num) {
+      if (selectedR < 0 || selectedC < 0) return;
+      const cell = getCell(selectedR, selectedC);
+      if (!cell || cell.dataset.given === '1') return;
+
+      const key = selectedR + ',' + selectedC;
+
+      if (pencilMode) {
+        // Toggle pencil mark
+        if (!pencilMarks[key]) pencilMarks[key] = new Set();
+        const set = pencilMarks[key];
+        const prevPencil = new Set(set);
+        if (set.has(num)) set.delete(num); else set.add(num);
+        history.push({ r: selectedR, c: selectedC, prevVal: cell.dataset.val, prevPencil });
+        renderPencil(cell, set);
+      } else {
+        // Place value
+        const prevVal = cell.dataset.val;
+        const prevPencil = pencilMarks[key] ? new Set(pencilMarks[key]) : null;
+        history.push({ r: selectedR, c: selectedC, prevVal: prevVal || '', prevPencil });
+
+        cell.dataset.val = num;
+        cell.textContent = num;
+        cell.classList.remove('wrong');
+        delete pencilMarks[key];
+
+        // Validate
+        if (solution[selectedR][selectedC] !== num) {
+          cell.classList.add('wrong');
+        } else {
+          cell.classList.add('correct-anim');
+          setTimeout(() => cell.classList.remove('correct-anim'), 500);
+          // Clear pencil marks in same row/col/box that contain this number
+          clearRelatedPencil(selectedR, selectedC, num);
+        }
+
+        updateFilledCount();
+        updateExhausted();
+        selectCell(selectedR, selectedC);
+        checkWin();
+      }
+    }
+
+    function clearRelatedPencil(r, c, num) {
+      for (let i = 0; i < 9; i++) {
+        removeFromPencil(r, i, num);
+        removeFromPencil(i, c, num);
+      }
+      const br = 3 * Math.floor(r / 3), bc = 3 * Math.floor(c / 3);
+      for (let dr = 0; dr < 3; dr++)
+        for (let dc = 0; dc < 3; dc++)
+          removeFromPencil(br + dr, bc + dc, num);
+    }
+
+    function removeFromPencil(r, c, num) {
+      const key = r + ',' + c;
+      const set = pencilMarks[key];
+      if (set) {
+        set.delete(num);
+        renderPencil(getCell(r, c), set);
+      }
+    }
+
+    function renderPencil(cell, marks) {
+      let container = cell.querySelector('.pencil-marks');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'pencil-marks';
+        for (let i = 1; i <= 9; i++) {
+          const s = document.createElement('span');
+          s.dataset.n = i;
+          container.appendChild(s);
+        }
+        cell.appendChild(container);
+      }
+      container.querySelectorAll('span').forEach(s => {
+        const n = parseInt(s.dataset.n);
+        s.textContent = marks.has(n) ? n : '';
+      });
+    }
+
+    /* ── Erase ── */
+    function eraseCell() {
+      if (selectedR < 0 || selectedC < 0) return;
+      const cell = getCell(selectedR, selectedC);
+      if (!cell || cell.dataset.given === '1') return;
+      const key = selectedR + ',' + selectedC;
+      history.push({ r: selectedR, c: selectedC, prevVal: cell.dataset.val || '', prevPencil: pencilMarks[key] ? new Set(pencilMarks[key]) : null });
+      cell.dataset.val = '';
+      cell.textContent = '';
+      cell.classList.remove('wrong');
+      delete pencilMarks[key];
+      const pm = cell.querySelector('.pencil-marks');
+      if (pm) pm.remove();
+      updateFilledCount();
+      updateExhausted();
+      selectCell(selectedR, selectedC);
+    }
+
+    /* ── Undo ── */
+    function undo() {
+      if (history.length === 0) return;
+      const action = history.pop();
+      const cell = getCell(action.r, action.c);
+      if (!cell) return;
+      const key = action.r + ',' + action.c;
+
+      cell.dataset.val = action.prevVal || '';
+      cell.textContent = action.prevVal || '';
+      cell.classList.remove('wrong');
+      if (action.prevVal && solution[action.r][action.c] !== parseInt(action.prevVal)) {
+        cell.classList.add('wrong');
+      }
+
+      if (action.prevPencil) {
+        pencilMarks[key] = action.prevPencil;
+        renderPencil(cell, action.prevPencil);
+      } else {
+        delete pencilMarks[key];
+        const pm = cell.querySelector('.pencil-marks');
+        if (pm) pm.remove();
+      }
+
+      updateFilledCount();
+      updateExhausted();
+      selectCell(action.r, action.c);
+    }
+
+    /* ── Win check ── */
+    function checkWin() {
+      let won = true;
+      boardEl.querySelectorAll('.cell').forEach(el => {
+        const r = +el.dataset.r, c = +el.dataset.c;
+        const v = parseInt(el.dataset.val);
+        if (!v || v !== solution[r][c]) won = false;
+      });
+      if (won) {
+        const msg = document.createElement('div');
+        msg.className = 'message success';
+        msg.textContent = '🎉 ¡Has completado el Sudoku!';
+        const existing = document.querySelector('.message');
+        if (existing) existing.remove();
+        document.querySelector('.sudoku-board').before(msg);
+        boardEl.querySelectorAll('.cell').forEach(el => el.style.pointerEvents = 'none');
+        numpadEl.querySelectorAll('button').forEach(b => b.disabled = true);
+      }
+    }
+
+    /* ── Events ── */
+    boardEl.addEventListener('click', e => {
+      const cell = e.target.closest('.cell');
+      if (!cell) return;
+      selectCell(+cell.dataset.r, +cell.dataset.c);
+    });
+
+    numpadEl.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      placeNumber(parseInt(btn.dataset.num));
+    });
+
+    btnPencil.addEventListener('click', () => {
+      pencilMode = !pencilMode;
+      btnPencil.classList.toggle('active', pencilMode);
+    });
+
+    btnErase.addEventListener('click', eraseCell);
+    btnUndo.addEventListener('click', undo);
+
+    document.addEventListener('keydown', e => {
+      if (e.key >= '1' && e.key <= '9') {
+        e.preventDefault();
+        placeNumber(parseInt(e.key));
+      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault();
+        eraseCell();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        undo();
+      } else if (e.key === 'ArrowUp' && selectedR > 0) { selectCell(selectedR - 1, selectedC); }
+      else if (e.key === 'ArrowDown' && selectedR < 8) { selectCell(selectedR + 1, selectedC); }
+      else if (e.key === 'ArrowLeft' && selectedC > 0) { selectCell(selectedR, selectedC - 1); }
+      else if (e.key === 'ArrowRight' && selectedC < 8) { selectCell(selectedR, selectedC + 1); }
+    });
+
+    /* ── Init ── */
+    (async function() {
+      const overlay = document.getElementById('loading-overlay');
+      const container = document.getElementById('app-container');
+      function show() { overlay.classList.add('hidden'); container.style.display = ''; updateFilledCount(); updateExhausted(); }
+      const timer = setTimeout(show, 3000);
+      try {
+        if (window.DiscordSDK) {
+          const sdk = new window.DiscordSDK('{{ discord_client_id }}');
+          await sdk.ready();
+        }
+      } catch(e) { console.log('Discord SDK error:', e); }
+      clearTimeout(timer);
+      show();
+    })();
+  </script>
+</body>
+</html>

@@ -264,7 +264,38 @@ async def crucigrama_slash(interaction: discord.Interaction):
         await interaction.response.send_message(
             f"❌ Error al lanzar la actividad: {e}", ephemeral=True
         )
-        
+
+# slash sudoku (Discord Activity — misma app, ruta /sudoku)
+
+@bot.tree.command(name="sudoku", description="Abre el Sudoku como actividad de Discord")
+async def sudoku_slash(interaction: discord.Interaction):
+    if interaction.guild is None:
+        await interaction.response.send_message(
+            "❌ Solo disponible en servidores.", ephemeral=True
+        )
+        return
+
+    try:
+        activity_url = f"https://discord.com/activities/{CRUCIGRAMA_APP_ID}"
+        embed = discord.Embed(
+            title="🔢 Sudoku",
+            description="¡Haz clic en el botón para jugar al Sudoku!",
+            color=discord.Color.green(),
+        )
+        view = discord.ui.View()
+        view.add_item(
+            discord.ui.Button(
+                label="Jugar Sudoku",
+                url=activity_url,
+                style=discord.ButtonStyle.link,
+            )
+        )
+        await interaction.response.send_message(embed=embed, view=view)
+    except Exception as e:
+        await interaction.response.send_message(
+            f"❌ Error al lanzar la actividad: {e}", ephemeral=True
+        )
+
 # apistats
 @bot.tree.command(name="apistats", description="Muestra las estadísticas de la API")
 async def apistats_slash(interaction: discord.Interaction):
