@@ -261,20 +261,29 @@ async def cumple_command(
         return
 
     # VIEWALL
-        birthdays = await cog.bot.api.get_birthdays(guild_id=interaction.guild.id, limit=500)
+    if act == "viewall":
+        birthdays = await cog.bot.api.get_birthdays(
+            guild_id=interaction.guild.id,
+            limit=500
+        )
         birthdays = birthdays or []
 
         if not birthdays:
-            await interaction.followup.send("No hay cumpleaños registrados en este servidor.", ephemeral=True)
+            await interaction.followup.send(
+                "No hay cumpleaños registrados en este servidor.",
+                ephemeral=True
+            )
             return
 
-        # Agrupar por mes y ordenar por día dentro de cada mes
         from collections import defaultdict
+
         meses = [
             "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
             "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
         ]
+
         groups = defaultdict(list)
+
         for b in birthdays:
             date_str = b.get("date", "")
             try:
@@ -291,7 +300,8 @@ async def cumple_command(
                         continue
                 else:
                     continue
-            groups[month].append((day, b["user_id"], date_str))
+
+            groups[month].append((day, int(b["user_id"]), date_str))
 
         lines = []
         for m in range(1, 13):
@@ -302,7 +312,10 @@ async def cumple_command(
                     lines.append(f"{day:02d}-{m:02d} — <@{uid}>")
 
         text = "\n".join(lines)
-        await interaction.followup.send(f"Cumpleaños en este servidor:\n{text}", ephemeral=True)
+        await interaction.followup.send(
+            f"Cumpleaños en este servidor:\n{text}",
+            ephemeral=True
+        )
         return
 
     await interaction.followup.send("Acción no reconocida.", ephemeral=True)
