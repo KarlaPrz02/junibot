@@ -54,7 +54,7 @@
     .cell[data-c="2"], .cell[data-c="5"] { border-right: 2px solid #1e293b; }
     .cell[data-r="2"], .cell[data-r="5"] { border-bottom: 2px solid #1e293b; }
 
-    .cell.given { background: #f1f5f9; color: #0f172a; cursor: default; }
+    .cell.given { background: #c1c5c9; color: #0f172a; cursor: default; }
     .cell.selected { background: #dbeafe; outline: 2px solid var(--primary); outline-offset: -2px; z-index: 1; }
     .cell.highlight { background: #eff6ff; }
     .cell.same-num { background: #e0f2fe; }
@@ -156,6 +156,7 @@
       <button class="ctrl-btn" id="btn-pencil" title="Modo notas">✏️ Notas</button>
       <button class="ctrl-btn" id="btn-erase" title="Borrar celda">🗑️ Borrar</button>
       <button class="ctrl-btn" id="btn-undo" title="Deshacer">↩️ Deshacer</button>
+      <button class="ctrl-btn" id="btn-errors" title="Mostrar errores">👁️ Errores</button>
     </div>
 
     <div class="numpad" id="numpad">
@@ -175,6 +176,7 @@
     /* ── State ── */
     const solution = {{ solution|tojson }};
     let pencilMode = false;
+    let showErrors = false;
     let selectedR = -1, selectedC = -1;
     const history = [];          // undo stack: [{r, c, prevVal, prevPencil}]
     const pencilMarks = {};      // "r,c" → Set of numbers
@@ -185,6 +187,7 @@
     const btnPencil = document.getElementById('btn-pencil');
     const btnErase = document.getElementById('btn-erase');
     const btnUndo = document.getElementById('btn-undo');
+    const btnErrors = document.getElementById('btn-errors');
     const filledSpan = document.getElementById('filled-count');
 
     function getCell(r, c) { return boardEl.querySelector(`.cell[data-r='${r}'][data-c='${c}']`); }
@@ -263,12 +266,16 @@
         delete pencilMarks[key];
 
         // Validate
-        if (solution[selectedR][selectedC] !== num) {
-          cell.classList.add('wrong');
-        } else {
-          cell.classList.add('correct-anim');
-          setTimeout(() => cell.classList.remove('correct-anim'), 500);
-          // Clear pencil marks in same row/col/box that contain this number
+        if (showErrors) {
+          if (solution[selectedR][selectedC] !== num) {
+            cell.classList.add('wrong');
+          } else {
+            cell.classList.add('correct-anim');
+            setTimeout(() => cell.classList.remove('correct-anim'), 500);
+          }
+        }
+        // Clear pencil marks in same row/col/box that contain this number
+        if (solution[selectedR][selectedC] === num) {
           clearRelatedPencil(selectedR, selectedC, num);
         }
 
@@ -346,7 +353,7 @@
       cell.dataset.val = action.prevVal || '';
       cell.textContent = action.prevVal || '';
       cell.classList.remove('wrong');
-      if (action.prevVal && solution[action.r][action.c] !== parseInt(action.prevVal)) {
+      if (showErrors && action.prevVal && solution[action.r][action.c] !== parseInt(action.prevVal)) {
         cell.classList.add('wrong');
       }
 
@@ -391,6 +398,12 @@
       selectCell(+cell.dataset.r, +cell.dataset.c);
     });
 
+    document.addEventListener('click', e => {
+      if (e.target.closest('.sudoku-board') || e.target.closest('.numpad') || e.target.closest('.controls-row')) return;
+      boardEl.querySelectorAll('.cell').forEach(el => el.classList.remove('selected', 'highlight', 'same-num'));
+      selectedR = -1; selectedC = -1;
+    });
+
     numpadEl.addEventListener('click', e => {
       const btn = e.target.closest('button');
       if (!btn) return;
@@ -404,6 +417,20 @@
 
     btnErase.addEventListener('click', eraseCell);
     btnUndo.addEventListener('click', undo);
+
+    btnErrors.addEventListener('click', () => {
+      showErrors = !showErrors;
+      btnErrors.classList.toggle('active', showErrors);
+      // Refresh all cells: add/remove wrong class
+      boardEl.querySelectorAll('.cell').forEach(el => {
+        if (el.dataset.given === '1' || !el.dataset.val) return;
+        const r = +el.dataset.r, c = +el.dataset.c;
+        const v = parseInt(el.dataset.val);
+        if (solution[r][c] !== v) {
+          el.classList.toggle('wrong', showErrors);
+        }
+      });
+    });
 
     document.addEventListener('keydown', e => {
       if (e.key >= '1' && e.key <= '9') {

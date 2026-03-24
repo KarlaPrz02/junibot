@@ -18,8 +18,8 @@
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; font-family: Inter, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; padding: 2rem; }
     .container { width: min(100%, 64rem); max-width: 95vw; background: var(--panel); border: 1px solid var(--border); border-radius: 0.75rem; box-shadow: 0 10px 35px var(--shadow); padding: 1.2rem 1.2rem 1.55rem; }
-    h1 { margin: 0 0 0.4rem; font-size: 1.8rem; font-weight: 700; }
-    .subtitle { margin: 0 0 1rem; color: var(--muted); font-size: 0.95rem; }
+    h1 { margin: 0 0 0.4rem; font-size: 1.8rem; font-weight: 700; text-align: center; }
+    .subtitle { margin: 0 0 1rem; color: var(--muted); font-size: 0.95rem; text-align: center; }
     .message { background: #e0f2fe; border: 1px solid #bae6fd; color: #0c4a6e; border-radius: 0.5rem; padding: 0.7rem 0.9rem; margin-bottom: 1rem; }
     .status { color: var(--muted); margin-top: 0.7rem; font-size: 0.9rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.45rem; }
     .board-grid {
@@ -36,7 +36,7 @@
       background: #e2e8f0;
     }
     .grid-row { display: contents; }
-    .grid-cell { width: min(2.4rem, calc((100vw - 4rem) / {{ grid_cols }})); height: min(2.4rem, calc((100vw - 4rem) / {{ grid_cols }})); border: 1px solid #475569; position: relative; display: flex; align-items: center; justify-content: center; background: #ffffff; font-weight: 700; color: #0f172a; font-size: min(0.85rem, calc((100vw - 4rem) / {{ grid_cols }} / 2)); transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease; }
+    .grid-cell { width: min(2.8rem, calc((100vw - 4rem) / {{ grid_cols }})); height: min(2.8rem, calc((100vw - 4rem) / {{ grid_cols }})); border: 1px solid #475569; position: relative; display: flex; align-items: center; justify-content: center; background: #ffffff; font-weight: 700; color: #0f172a; font-size: min(0.95rem, calc((100vw - 4rem) / {{ grid_cols }} / 2)); transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease; }
     .grid-cell.filled { background: #f8fafc; }
     .grid-cell.hidden.filled { background: #e2e8f0; color: transparent; }
     .grid-cell.hidden.filled.has-content { color: #0f172a; }
@@ -51,6 +51,17 @@
         30% { background: #16a34a; color: #fff; }
         80% { background: #16a34a; color: #fff; }
         100% { background: #16a34a; color: #fff; }
+      }
+      .grid-cell.shake-wrong {
+        animation: shake-red 0.5s ease;
+      }
+      @keyframes shake-red {
+        0% { background: #fee2e2; transform: translateX(0); }
+        20% { background: #fca5a5; transform: translateX(-4px); }
+        40% { background: #fca5a5; transform: translateX(4px); }
+        60% { background: #fca5a5; transform: translateX(-4px); }
+        80% { background: #fee2e2; transform: translateX(2px); }
+        100% { background: #fff; transform: translateX(0); }
       }
     .grid-cell.flip { animation: flip 0.45s ease forwards; }
     .grid-cell.correct { background: #16a34a !important; color: white !important; border-color: #16a34a !important; }
@@ -144,7 +155,6 @@
       .status p { margin: 0; }
 
       /* Timer compact */
-      #timer-bar { margin-top: 0.4rem !important; gap: 0.4rem !important; }
       #timer-display { font-size: 0.95rem !important; }
     }
 
@@ -170,23 +180,14 @@
   <div id="loading-overlay"><div class="spinner"></div></div>
   <main class="container" style="display:none;" id="app-container">
     <h1>Crucigrama</h1>
-    <p class="subtitle">Juego minimalista con enfoque en las pistas y el tablero.</p>
+    <p class="subtitle">{{ crossword.form }} · {{ crossword.hint }}</p>
     {% if message %}
       <div class="message">{{ message }}</div>
     {% endif %}
-
-    <div><strong>Modo:</strong> {{ crossword.form }} · {{ crossword.hint }}</div>
     {% if time_remaining >= 0 %}
-    <div id="timer-bar" style="margin-top: 0.6rem; display: flex; align-items: center; gap: 0.6rem;">
-      <span id="timer-icon" style="font-size: 1.2rem;">⏱️</span>
-      <span id="timer-display" style="font-weight: 700; font-size: 1.1rem; font-variant-numeric: tabular-nums;"></span>
-      <div style="flex: 1; height: 0.5rem; background: #e2e8f0; border-radius: 0.25rem; overflow: hidden;">
-        <div id="timer-progress" style="height: 100%; background: #3b82f6; border-radius: 0.25rem; transition: width 1s linear;"></div>
-      </div>
-    </div>
+    <div id="timer-display" style="text-align: right; font-weight: 700; font-size: 1.1rem; font-variant-numeric: tabular-nums; margin: 0.4rem 0 0;">⏱️ <span id="timer-text"></span></div>
     {% endif %}
 
-    <h2>Tablero</h2>
     <div class="board-grid">
       {% for row in board_grid %}
         <div class="grid-row">
@@ -208,7 +209,7 @@
       {% endfor %}
     </div>
 
-    <h2>Pistas</h2>
+    <h3 style="margin: 0.8rem 0 0.3rem; text-align: center;">Pistas</h3>
     <div class="clue-columns" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; max-height: 25rem; overflow-y: auto;">
       <div>
         <h3>Horizontal</h3>
@@ -233,33 +234,28 @@
     </div>
 
     <div class="controls">
-      <input type="hidden" id="selected-clue" value="">
-      <form id="word-input-form" action="{{ url_for('guess') }}" method="post">
-        <input type="hidden" name="numero" id="input-numero" value="">
-        <input type="hidden" name="palabra" id="input-palabra" value="">
-        <button type="submit" id="submit-word" disabled>Enviar palabra</button>
-      </form>
-      <p id="validation-message" style="font-weight: 600; color: #0b6f4b; margin: 0.4rem 0 0; min-height: 1.25rem;"></p>
+      <button type="button" id="verify-all" disabled onclick="verifyAll()">Verificar crucigrama</button>
+      <p id="validation-message" style="font-weight: 600; color: #475569; margin: 0.4rem 0 0; min-height: 1.25rem;"></p>
     </div>
 
     <div class="status">
-      <p>Resueltas: {{ solved|length }} / {{ crossword.clues|length }}. Pendientes: {{ pending|join(', ') }}</p>
+      <p>Resueltas: <span id="solved-count">{{ solved|length }}</span> / {{ crossword.clues|length }}. <span id="pending-text">Pendientes: {{ pending|join(', ') }}</span></p>
       <p><a class="link" href="{{ url_for('start') }}">Reiniciar crucigrama</a></p>
     </div>
 
     <script>
       const cluePositions = {{ clue_positions|tojson }};
       const crosswordClues = {{ crossword.clues|tojson }};
+      const totalClues = crosswordClues.length;
       let selectedClue = null;
+      const solvedSet = new Set({{ solved|tojson }});
 
       // Quick-mode countdown timer
       (function() {
         const remaining = {{ time_remaining }};
         if (remaining < 0) return;
-        const TOTAL = 15 * 60;
-        const display = document.getElementById('timer-display');
-        const progress = document.getElementById('timer-progress');
-        const bar = document.getElementById('timer-bar');
+        const display = document.getElementById('timer-text');
+        const timerEl = document.getElementById('timer-display');
         let left = remaining;
 
         function fmt(s) {
@@ -269,22 +265,19 @@
         }
         function tick() {
           display.textContent = fmt(left);
-          progress.style.width = (left / TOTAL * 100) + '%';
           if (left <= 60) {
-            display.style.color = '#dc2626';
-            progress.style.background = '#dc2626';
+            timerEl.style.color = '#dc2626';
           }
           if (left <= 0) {
             display.textContent = '0:00';
-            progress.style.width = '0%';
-            document.getElementById('submit-word').disabled = true;
+            document.getElementById('verify-all').disabled = true;
             document.querySelectorAll('.grid-cell.hidden.filled').forEach(function(c) {
               c.style.pointerEvents = 'none';
             });
             const msg = document.querySelector('.message') || (function() {
               const d = document.createElement('div');
               d.className = 'message';
-              bar.parentNode.insertBefore(d, bar);
+              timerEl.parentNode.insertBefore(d, timerEl);
               return d;
             })();
             msg.textContent = '⏰ ¡Se acabó el tiempo!';
@@ -301,23 +294,6 @@
 
       function getCell(r, c) {
         return document.querySelector(`.grid-cell[data-r='${r}'][data-c='${c}']`);
-      }
-
-      function getClueByNumber(num) {
-        return crosswordClues.find(c => Number(c.numero) === Number(num)) || null;
-      }
-
-      function wordleFeedback(attempt, target) {
-        // Helper no-op for futuras mejoras; la validación no se aplica en tiempo real.
-        return [];
-      }
-
-      function applyWordFeedback(coords, feedback) {
-        // No aplicar colores de feedback en tiempo real para el estilo "crucigrama tradicional".
-      }
-
-      function clearWordFeedback(coords) {
-        // No aplicar ni limpiar feedback visual inmediato.
       }
 
       function clearActiveInputs() {
@@ -352,20 +328,16 @@
 
       function updateSelectedClue(newClue) {
         selectedClue = newClue;
-        document.getElementById('selected-clue').value = newClue;
 
         document.querySelectorAll('.clue-item').forEach(item => {
           const clueNum = Number(item.dataset.clue);
-          item.classList.toggle('active', clueNum === newClue);
+          item.classList.toggle('active', clueNum === newClue && !solvedSet.has(clueNum));
         });
 
         document.querySelectorAll('.grid-cell').forEach(cell => cell.classList.remove('selected'));
         clearActiveInputs();
 
-        if (!cluePositions[selectedClue]) {
-          document.getElementById('submit-word').disabled = true;
-          return;
-        }
+        if (!cluePositions[selectedClue]) return;
 
         const coords = cluePositions[selectedClue];
         coords.forEach(([r, c]) => {
@@ -385,7 +357,7 @@
           input.addEventListener('input', () => {
             input.value = input.value.toUpperCase().replace(/[^A-ZÑÁÉÍÓÚÜ]/g, '').slice(0,1);
             cell.dataset.entered = input.value.toUpperCase();
-            updateWordValue();
+            checkAllFilled();
             if (input.value) {
               const nextCell = coordToElement(coords, r, c, true);
               if (nextCell) {
@@ -395,82 +367,181 @@
             }
           });
 
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace') {
+              e.preventDefault();
+              if (input.value) {
+                input.value = '';
+                cell.dataset.entered = '';
+                cell.classList.remove('has-content');
+              } else {
+                const prevCell = coordToElement(coords, r, c, false);
+                if (prevCell) {
+                  const prevInput = prevCell.querySelector('.cell-input');
+                  if (prevInput) {
+                    prevInput.value = '';
+                    prevCell.dataset.entered = '';
+                    prevCell.classList.remove('has-content');
+                    prevInput.focus();
+                  }
+                }
+              }
+              checkAllFilled();
+            }
+          });
+
           let letterNode = cell.querySelector('.cell-letter');
           if (letterNode) letterNode.style.visibility = 'hidden';
           cell.appendChild(input);
         });
 
-        document.getElementById('input-numero').value = selectedClue;
-        updateWordValue();
+        checkAllFilled();
+      }
+
+      function verifyAll() {
+        clearActiveInputs();
+        const validation = document.getElementById('validation-message');
+        let allCorrect = true;
+        const results = [];
+        let maxDelay = 0;
+
+        crosswordClues.forEach(clue => {
+          const num = clue.numero;
+          if (solvedSet.has(num)) return;
+          const coords = cluePositions[num];
+          if (!coords) return;
+
+          let word = '';
+          coords.forEach(([r, c]) => {
+            const cell = getCell(r, c);
+            if (!cell) return;
+            if (cell.dataset.revealed === '1') {
+              word += (cell.dataset.letter || '').toUpperCase();
+            } else {
+              word += (cell.dataset.entered || '').toUpperCase();
+            }
+          });
+
+          const correct = word === clue.answer.toUpperCase();
+          results.push({ num, coords, correct });
+          if (!correct) allCorrect = false;
+        });
+
+        // Apply feedback per word
+        results.forEach(({ num, coords, correct }) => {
+          if (correct) {
+            solvedSet.add(num);
+            coords.forEach(([r, c], i) => {
+              const cell = getCell(r, c);
+              if (!cell) return;
+              const delay = i * 60;
+              if (delay > maxDelay) maxDelay = delay;
+              setTimeout(() => {
+                cell.dataset.revealed = '1';
+                cell.classList.remove('hidden', 'selected', 'has-content');
+                cell.classList.add('revealed', 'correct', 'flash-correct');
+                const letterNode = cell.querySelector('.cell-letter');
+                if (letterNode) {
+                  letterNode.style.visibility = 'visible';
+                  letterNode.textContent = cell.dataset.letter.toUpperCase();
+                }
+              }, delay);
+            });
+            document.querySelectorAll('.clue-item').forEach(item => {
+              if (Number(item.dataset.clue) === num) {
+                item.classList.add('active');
+                if (!item.textContent.includes('\u2705')) item.textContent += ' \u2705';
+              }
+            });
+          } else {
+            coords.forEach(([r, c]) => {
+              const cell = getCell(r, c);
+              if (!cell || cell.dataset.revealed === '1') return;
+              cell.classList.add('shake-wrong');
+              setTimeout(() => cell.classList.remove('shake-wrong'), 500);
+            });
+          }
+        });
+
+        // Update status
+        document.getElementById('solved-count').textContent = solvedSet.size;
+        const pendingNums = crosswordClues.filter(c => !solvedSet.has(c.numero)).map(c => c.display_num);
+        document.getElementById('pending-text').textContent = pendingNums.length ? 'Pendientes: ' + pendingNums.join(', ') : '';
+
+        const correctCount = results.filter(r => r.correct).length;
+        const wrongCount = results.filter(r => !r.correct).length;
+
+        if (solvedSet.size === totalClues) {
+          validation.textContent = '\ud83c\udf89 \u00a1Crucigrama resuelto!';
+          validation.style.color = '#0b6f4b';
+          setTimeout(() => {
+            const msg = document.querySelector('.message') || (function() {
+              const d = document.createElement('div');
+              d.className = 'message';
+              document.querySelector('.board-grid').before(d);
+              return d;
+            })();
+            msg.textContent = '\ud83c\udf89 \u00a1Has resuelto el crucigrama!';
+            msg.style.background = '#dcfce7';
+            msg.style.borderColor = '#bbf7d0';
+            msg.style.color = '#166534';
+            document.getElementById('verify-all').disabled = true;
+          }, maxDelay + 300);
+        } else if (correctCount > 0) {
+          validation.textContent = '\u2705 ' + correctCount + ' correcta' + (correctCount > 1 ? 's' : '') + ', \u2717 ' + wrongCount + ' incorrecta' + (wrongCount > 1 ? 's' : '') + '. Corrige y vuelve a verificar.';
+          validation.style.color = '#dc2626';
+        } else {
+          validation.textContent = '\u2717 Ninguna palabra correcta. Sigue intentando.';
+          validation.style.color = '#dc2626';
+        }
+
+        // Re-select first unsolved clue after animation
+        setTimeout(() => {
+          const next = crosswordClues.find(c => !solvedSet.has(c.numero));
+          if (next) updateSelectedClue(next.numero);
+          checkAllFilled();
+        }, maxDelay + 400);
       }
 
       function coordToElement(coords, r, c, next = false) {
         const index = coords.findIndex(([rr, cc]) => rr === r && cc === c);
-        const target = (next ? index + 1 : index - 1);
-        if (target >= 0 && target < coords.length) {
+        const step = next ? 1 : -1;
+        let target = index + step;
+        while (target >= 0 && target < coords.length) {
           const [nr, nc] = coords[target];
-          return getCell(nr, nc);
+          const cell = getCell(nr, nc);
+          if (cell && cell.dataset.revealed !== '1') return cell;
+          target += step;
         }
         return null;
       }
 
-      function updateWordValue() {
-        if (!selectedClue || !cluePositions[selectedClue]) return;
-        const coords = cluePositions[selectedClue];
-        let word = '';
-        let complete = true;
+      function checkAllFilled() {
+        const allCells = document.querySelectorAll('.grid-cell.filled');
+        let filledCount = 0;
+        let totalCount = 0;
 
-        coords.forEach(([r, c]) => {
-          const cell = getCell(r, c);
-          if (!cell) return;
-          if (cell.dataset.revealed === '1') {
-            word += cell.dataset.letter || '';
-            return;
-          }
+        allCells.forEach(cell => {
+          totalCount++;
+          if (cell.dataset.revealed === '1') { filledCount++; return; }
           const input = cell.querySelector('.cell-input');
-          const v = input ? input.value : (cell.dataset.entered || '');
-          if (!v || v.length === 0) {
-            complete = false;
-          }
-          word += v;
+          const val = input ? input.value : (cell.dataset.entered || '');
+          if (val) filledCount++;
         });
 
-        document.getElementById('input-palabra').value = word;
+        const allFilled = filledCount === totalCount;
+        document.getElementById('verify-all').disabled = !allFilled;
+
         const validation = document.getElementById('validation-message');
-        const clue = getClueByNumber(selectedClue);
-
-        if (word.length > 0 && clue) {
-          validation.textContent = `${word.length}/${clue.length} letras completadas`;
+        if (allFilled && solvedSet.size < totalClues) {
+          validation.textContent = '✅ Todas las casillas completas. ¡Pulsa Verificar!';
+          validation.style.color = '#0b6f4b';
+        } else if (solvedSet.size < totalClues) {
+          validation.textContent = filledCount + '/' + totalCount + ' casillas completadas';
           validation.style.color = '#475569';
-          if (word.length === clue.length) {
-            validation.textContent = '✅ Palabra completa, pulsa Enviar para verificar.';
-            validation.style.color = '#0b6f4b';
-          }
-        } else {
-          validation.textContent = '';
         }
-
-        document.getElementById('submit-word').disabled = !complete;
       }
 
-      function crosswordClueByNumber(num) {
-        const all = [
-          ...document.querySelectorAll('li.clue-item'),
-        ];
-        for (const item of all) {
-          if (Number(item.dataset.clue) === Number(num)) {
-            const text = item.textContent || '';
-            const match = text.match(/\((\d+) letras\)$/);
-            if (match) {
-              const clueText = text.replace(/^[0-9]+\.\s*/, '').replace(/\s*\(\d+ letras\)$/, '');
-              const len = Number(match[1]);
-              return {number: Number(num), clue: clueText, length: len, answer: null};
-            }
-          }
-        }
-        const cl = ({{ crossword.clues|tojson }}).find(c => c.numero === Number(num));
-        return cl || null;
-      }
 
 
       document.querySelectorAll('.clue-item').forEach(item => {
@@ -504,6 +575,16 @@
         }, 1500);
       }
     })();
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        const btn = document.getElementById('verify-all');
+        if (!btn.disabled) {
+          e.preventDefault();
+          verifyAll();
+        }
+      }
+    });
     </script>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1/dist/index.global.js"></script>
