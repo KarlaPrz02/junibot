@@ -25,6 +25,8 @@ _CONFIG = _load_bot_config()
 TZ = ZoneInfo(_CONFIG.get("timezone", "Europe/Madrid"))
 DATE_FORMAT = "%d-%m-%Y %H:%M"
 MAX_REMINDER_TEXT = 1500
+REPLY_REMINDER_PREFIX = "__JUNIBOT_REPLY_REMINDER_V1__"
+
 
 WEEKDAY_MAP = {
     "lunes": 0,
@@ -226,15 +228,85 @@ async def resolve_referenced_message(message: discord.Message) -> Optional[disco
 
 def build_reply_reminder_text(source_message: discord.Message, extra_text: str = "") -> str:
     author_name = getattr(source_message.author, "display_name", None) or str(source_message.author)
-    content = (source_message.content or "[mensaje sin texto]").strip()
-    content = clip_text(content, 800)
+    content = (source_message.content or "").strip() or "[mensaje sin texto]"
+    content = clip_text(content, 1500)
 
-    parts = []
+    attachments = []
+    try:
+        attachments = [getattr(a, "url", None) for a in (source_message.attachments or []) if getattr(a, "url", None)]
+    except Exception:
+        attachments = []
+
+    payload = {
+        "kind": "reply",
+        "extra_text": clip_text(extra_text or "", 500),
+        "source_author_name": author_name,
+        "source_content": content,
+        "source_jump_url": source_message.jump_url,
+        "source_message_id": getattr(source_message, "id", None),
+        "source_channel_id": getattr(getattr(source_message, "channel", None), "id", None),
+        "source_created_at": source_message.created_at.isoformat() if getattr(source_message, "created_at", None) else None,
+        "attachment_urls": attachments[:3],
+    }
+    return REPLY_REMINDER_PREFIX + json.dumps(payload, ensure_ascii=False)
+
+
+def parse_reply_reminder_payload(text: str) -> Optional[dict]:
+    if not text or not text.startswith(REPLY_REMINDER_PREFIX):
+        return None
+
+    raw = text[len(REPLY_REMINDER_PREFIX):]
+    try:
+        data = json.loads(raw)
+    except Exception:
+        return None
+
+    if not isinstance(data, dict) or data.get("kind") != "reply":
+        return None
+
+    return data
+
+
+def build_reply_reminder_embed(payload: dict) -> discord.Embed:
+    author_name = payload.get("source_author_name") or "Usuario"
+    source_content = payload.get("source_content") or "[mensaje sin texto]"
+    source_content = clip_text(source_content, 4000)
+    extra_text = (payload.get("extra_text") or "").strip()
+
+    embed = discord.Embed(
+        title="Mensaje del recordatorio",
+        description=source_content,
+    )
+    embed.set_author(name=author_name)
+
     if extra_text:
-        parts.append(extra_text)
-    parts.append(f"Mensaje respondido de {author_name}: {content}")
-    parts.append(f"Enlace: {source_message.jump_url}")
-    return clip_text("\n".join(parts))
+        embed.add_field(name="Tu recordatorio", value=clip_text(extra_text, 1024), inline=False)
+
+    jump_url = payload.get("source_jump_url")
+    if jump_url:
+        embed.add_field(name="Ir al mensaje", value=f"[Abrir mensaje]({jump_url})", inline=False)
+
+    created_at = payload.get("source_created_at")
+    if created_at:
+        try:
+            dt = datetime.fromisoformat(created_at)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=TZ)
+            else:
+                dt = dt.astimezone(TZ)
+            embed.set_footer(text=f"Mensaje original enviado el {dt.strftime(DATE_FORMAT)}")
+        except Exception:
+            pass
+
+    attachment_urls = payload.get("attachment_urls") or []
+    if attachment_urls:
+        first_url = attachment_urls[0]
+        if isinstance(first_url, str) and re.search(r"\.(png|jpe?g|gif|webp)$", first_url, re.IGNORECASE):
+            embed.set_image(url=first_url)
+        else:
+            embed.add_field(name="Adjunto", value=f"[Abrir adjunto]({first_url})", inline=False)
+
+    return embed
 
 
 class Reminders(commands.Cog):
@@ -273,8 +345,27 @@ class Reminders(commands.Cog):
             user = None
 
         mention = f"<@{reminder['user_id']}>"
-        text = reminder["message"]
+        raw_message = reminder["message"]
+        reply_payload = parse_reply_reminder_payload(raw_message)
 
+        if reply_payload is not None:
+            embed = build_reply_reminder_embed(reply_payload)
+            extra_text = (reply_payload.get("extra_text") or "").strip()
+            channel_text = f"⏰ {mention} — Recordatorio"
+            dm_text = "⏰ Recordatorio"
+            if extra_text:
+                channel_text += f": {clip_text(extra_text, 500)}"
+                dm_text += f": {clip_text(extra_text, 500)}"
+
+            if channel is not None:
+                await channel.send(channel_text, embed=embed)
+            elif user is not None:
+                await user.send(dm_text, embed=embed)
+            else:
+                raise RuntimeError("No pude encontrar ni el canal ni el usuario para enviar el recordatorio")
+            return
+
+        text = raw_message
         if channel is not None:
             await channel.send(f"⏰ {mention} — Recordatorio: {text}")
         elif user is not None:
