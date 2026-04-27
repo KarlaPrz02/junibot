@@ -83,6 +83,7 @@ class Birthdays(commands.Cog):
                     day_month=day_month,
                     limit=500
                 )
+                print(f"[BIRTHDAYS] tick today_iso={today_iso} day_month={day_month} due_items={0 if not due_items else len(due_items)}", flush=True)
 
                 if due_items:
                     grouped = {}
@@ -93,24 +94,26 @@ class Birthdays(commands.Cog):
                     for guild_id, matches in grouped.items():
                         try:
                             channel_id = None
-                            guilds = self.config.get("guilds", {})
-                            guild_config = guilds.get(str(guild_id), {})
+                            guild_config = self.config.get(str(guild_id), {})
                             if isinstance(guild_config, dict):
                                 channel_id = guild_config.get("birthdays")
 
+                            print(f"[BIRTHDAYS] guild={guild_id} channel_id={channel_id} matches={len(matches)}", flush=True)
+
                             if not channel_id:
+                                print(f"[BIRTHDAYS] guild={guild_id} sin canal configurado", flush=True)
                                 continue
 
                             channel = self.bot.get_channel(int(channel_id))
                             if channel is None:
                                 try:
                                     channel = await self.bot.fetch_channel(int(channel_id))
-                                except Exception:
+                                except Exception as e:
+                                    print(f"[BIRTHDAYS] guild={guild_id} no pude fetch_channel({channel_id}): {e}", flush=True)
                                     continue
 
-                            mentions = " ".join(f"<@{m['user_id']}>" for m in matches)
-                            names = ", ".join(f"<@{m['user_id']}>" for m in matches)
-                            text = f"🎉 ¡Hoy es el cum-ple de {names}! 🎂\n{mentions}\n"
+                            mentions = ", ".join(f"<@{m['user_id']}>" for m in matches)
+                            text = f"🎉 ¡Hoy es el cum-ple de {mentions}! 🎂\n"
 
                             await channel.send(f"@everyone\n{text}")
 
@@ -142,12 +145,11 @@ class Birthdays(commands.Cog):
 
     async def set_channel(self, guild_id: int, channel_id: int):
         async with self._lock:
-            guilds = self.config.setdefault("guilds", {})
-            guild_config = guilds.get(str(guild_id), {})
+            guild_config = self.config.get(str(guild_id), {})
             if not isinstance(guild_config, dict):
                 guild_config = {}
             guild_config["birthdays"] = channel_id
-            guilds[str(guild_id)] = guild_config
+            self.config[str(guild_id)] = guild_config
             _save_config(self.config)
 
 ACTIONS = [
