@@ -6,5 +6,5 @@ Junibot was created with the idea of ​​pinging Juni (a friend), as time went
 
 # Future features
 
-- 15x15 semanal crossword
-- 6x6 daily crossword with time
+- Sudoku daily challenges
+- Sudoku difficulty selector

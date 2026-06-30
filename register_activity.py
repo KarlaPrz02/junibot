@@ -7,7 +7,7 @@ with open("config.json", "r", encoding="utf-8") as f:
     cfg = json.load(f)
 
 TOKEN = cfg["bot"]["token"]
-APP_ID = str(cfg["crucigrama"]["app_id"])
+APP_ID = str(cfg.get("sudoku", {}).get("app_id", cfg.get("crucigrama", {}).get("app_id")))
 
 payload = json.dumps({
     "name": "launch",

@@ -29,8 +29,7 @@
     "reminders": "reminders.json",
     "reactions": "reactions.json",
     "stats": "stats.json",
-    "palabras": "palabras.txt",
-    "crucigrama": "crucigrama.json"
+    "palabras": "palabras.txt"
   },
 
   "wordle": {
@@ -49,7 +48,7 @@
     "imagenes": ["noche.PNG", "muejeje.PNG", "insane.gif", "breakdown.PNG"]
   },
 
-  "crucigrama": {
+  "sudoku": {
     "app_id": 449903611128971275
   },
 
