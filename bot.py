@@ -184,6 +184,7 @@ class HelpView(discord.ui.View):
             description="Aquí tienes información general sobre los comandos del bot:",
             color=discord.Color.blue()  
         )
+        embed.add_field(name="Prefijo del bot", value="jb;", inline=False)
         embed.add_field(name="/juni", value="Menciona a Juni.", inline=False)
         embed.add_field(name="/help", value="Este menú de ayuda.", inline=False)
         embed.add_field(name="/cumpleaños ``[add/view/delete/edit]``", value="Gestiona los cumpleaños.", inline=False)
@@ -192,7 +193,7 @@ class HelpView(discord.ui.View):
         embed.add_field(name="/estado actual", value="Muestra un estado aleatorio de Juni.", inline=False)
         embed.add_field(name="/carla imagen", value="Muestra los estados de Carla.", inline=False)
         embed.add_field(name="/carla actual", value="Muestra un estado aleatorio de Carla.", inline=False)
-        embed.add_field(name="!exportar ``[limite]``", value="Exporta los mensajes del canal actual a un archivo .txt listo para copiar o archivar.", inline=False)
+        embed.add_field(name="jb;exportar ``[limite]``", value="Exporta los mensajes del canal actual a un archivo .txt listo para copiar o archivar.", inline=False)
         embed.add_field(name="/reaccion ``[agregar/eliminar/list/limpiar]``", value="Gestiona reacciones para asignar roles.", inline=False)
         embed.set_footer(text="Desarrollado por KatPrz02")
         await interaction.message.edit(embed=embed, view=self)
@@ -275,8 +276,8 @@ async def exportar_command(ctx, limite: int = 100):
         await ctx.send("⚠️ El límite debe ser mayor que 0.")
         return
 
-    if limite > 500:
-        limite = 500
+    if limite > 1000:
+        limite = 1000
 
     if not isinstance(ctx.channel, discord.TextChannel):
         await ctx.send("⚠️ Este comando solo funciona en canales de texto.")
