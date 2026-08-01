@@ -2,8 +2,10 @@ import discord
 from discord.ext import commands
 import os
 import json
-from discord import app_commands
+import io
 import random
+from datetime import datetime
+from discord import app_commands
 from discord.ui import View, button
 from api_client import APIClient
 
@@ -38,6 +40,38 @@ STATUS_TYPES = {
     "dnd": discord.Status.dnd,
     "invisible": discord.Status.invisible,
 }
+
+
+def build_export_text(guild_name, channel, messages):
+    header_lines = [
+        "=== EXPORTACIÓN DE CHAT ===",
+        f"Servidor: {guild_name}",
+        f"Canal: #{channel.name}",
+        f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        f"Mensajes exportados: {len(messages)}",
+        "",
+    ]
+
+    body_lines = []
+    for message in messages:
+        timestamp = message.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        author = message.author.display_name if message.author else "Sistema"
+        content = message.content.strip() if message.content else "[sin texto]"
+
+        if content:
+            content = content.replace("\r\n", "\n").replace("\n", "\n")
+
+        if message.attachments:
+            attachment_names = ", ".join(att.filename for att in message.attachments)
+            content = f"{content}\n[Adjuntos: {attachment_names}]"
+
+        if message.embeds:
+            content = f"{content}\n[Embeds: {len(message.embeds)}]"
+
+        body_lines.append(f"[{timestamp}] {author}: {content}")
+
+    return "\n".join(header_lines + body_lines)
+
 
 @bot.event
 async def on_ready():
@@ -158,6 +192,7 @@ class HelpView(discord.ui.View):
         embed.add_field(name="/estado actual", value="Muestra un estado aleatorio de Juni.", inline=False)
         embed.add_field(name="/carla imagen", value="Muestra los estados de Carla.", inline=False)
         embed.add_field(name="/carla actual", value="Muestra un estado aleatorio de Carla.", inline=False)
+        embed.add_field(name="!exportar ``[limite]``", value="Exporta los mensajes del canal actual a un archivo .txt listo para copiar o archivar.", inline=False)
         embed.add_field(name="/reaccion ``[agregar/eliminar/list/limpiar]``", value="Gestiona reacciones para asignar roles.", inline=False)
         embed.set_footer(text="Desarrollado por KatPrz02")
         await interaction.message.edit(embed=embed, view=self)
@@ -230,6 +265,43 @@ async def help_slash(interaction: discord.Interaction):
 async def juni_prefix(ctx):
     author = ctx.author.mention
     await ctx.send(f"{author} mention <@{USER1_ID}> <@{USER2_ID}>")
+    
+    # exportar 
+
+@bot.command(name="exportar", aliases=["export"])
+@commands.bot_has_permissions(read_message_history=True, send_messages=True)
+async def exportar_command(ctx, limite: int = 100):
+    if limite <= 0:
+        await ctx.send("⚠️ El límite debe ser mayor que 0.")
+        return
+
+    if limite > 500:
+        limite = 500
+
+    if not isinstance(ctx.channel, discord.TextChannel):
+        await ctx.send("⚠️ Este comando solo funciona en canales de texto.")
+        return
+
+    try:
+        history = [msg async for msg in ctx.channel.history(limit=limite, oldest_first=False)]
+        history.reverse()
+    except discord.Forbidden:
+        await ctx.send("❌ No tengo permisos para leer el historial de mensajes de este canal.")
+        return
+
+    export_text = build_export_text(
+        ctx.guild.name if ctx.guild else "DM",
+        ctx.channel,
+        history,
+    )
+
+    filename = f"{ctx.channel.name}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    file_obj = io.StringIO(export_text)
+    await ctx.send(
+        f"📄 Exportación lista con {len(history)} mensajes desde #{ctx.channel.name}.",
+        file=discord.File(file_obj, filename=filename),
+    )
+
 
 # slash sudoku (Discord Activity — misma app, ruta /sudoku)
 
