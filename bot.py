@@ -2,9 +2,7 @@ import discord
 from discord.ext import commands
 import os
 import json
-import io
 import random
-from datetime import datetime
 from discord import app_commands
 from discord.ui import View, button
 from api_client import APIClient
@@ -22,7 +20,53 @@ intents.message_content = True
 intents.members = True  
 intents.presences = True  
 
-bot = commands.Bot(command_prefix=CONFIG["bot"]["prefix"], intents=intents)
+class JuniBot(commands.Bot):
+    async def setup_hook(self):
+        for cog in CONFIG["cogs"]:
+            await self.load_extension(cog)
+
+        if self.application_id is None:
+            raise RuntimeError("Discord no proporcionó el ID de la aplicación.")
+
+        existing_commands = await self.tree._http.get_global_commands(self.application_id)
+        entry_point_commands = [
+            command for command in existing_commands
+            if command.get("type") == 4
+        ]
+        command_payload = [
+            command.to_dict(self.tree)
+            for command in self.tree.get_commands()
+        ]
+
+        # discord.py 2.5 no modela el comando Entry Point de Activities; conservarlo
+        # en la carga masiva evita que Discord lo interprete como una eliminación.
+        entry_point_fields = (
+            "name",
+            "type",
+            "description",
+            "handler",
+            "name_localizations",
+            "description_localizations",
+            "integration_types",
+            "contexts",
+        )
+        command_payload.extend(
+            {
+                key: command[key]
+                for key in entry_point_fields
+                if key in command
+            }
+            for command in entry_point_commands
+        )
+
+        synced = await self.tree._http.bulk_upsert_global_commands(
+            self.application_id,
+            payload=command_payload,
+        )
+        print(f"Slash commands synced: {[command['name'] for command in synced]}")
+
+
+bot = JuniBot(command_prefix=CONFIG["bot"]["prefix"], intents=intents)
 bot.config = CONFIG
 bot.api = APIClient(CONFIG.get("api", {}))
 print("DEBUG api config:", CONFIG.get("api", {}), flush=True)
@@ -42,52 +86,9 @@ STATUS_TYPES = {
 }
 
 
-def build_export_text(guild_name, channel, messages):
-    header_lines = [
-        "=== EXPORTACIÓN DE CHAT ===",
-        f"Servidor: {guild_name}",
-        f"Canal: #{channel.name}",
-        f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-        f"Mensajes exportados: {len(messages)}",
-        "",
-    ]
-
-    body_lines = []
-    for message in messages:
-        timestamp = message.created_at.strftime("%Y-%m-%d %H:%M:%S")
-        author = message.author.display_name if message.author else "Sistema"
-        content = message.content.strip() if message.content else "[sin texto]"
-
-        if content:
-            content = content.replace("\r\n", "\n").replace("\n", "\n")
-
-        if message.attachments:
-            attachment_names = ", ".join(att.filename for att in message.attachments)
-            content = f"{content}\n[Adjuntos: {attachment_names}]"
-
-        if message.embeds:
-            content = f"{content}\n[Embeds: {len(message.embeds)}]"
-
-        body_lines.append(f"[{timestamp}] {author}: {content}")
-
-    return "\n".join(header_lines + body_lines)
-
-
 @bot.event
 async def on_ready():
-    for cog in CONFIG["cogs"]:
-        try:
-            await bot.load_extension(cog)
-        except Exception as e:
-            print(f"Error cargando {cog}:", e)
-
     print(f"Connecting as {bot.user}...")
-
-    try:
-        synced = await bot.tree.sync()
-        print(f"Slash commands synced: {[cmd.name for cmd in synced]}")
-    except Exception as e:
-        print(f"Error sync commands: {e}")
 
     activity_cfg = CONFIG["bot"]["activity"]
     activity = discord.Activity(
@@ -189,11 +190,7 @@ class HelpView(discord.ui.View):
         embed.add_field(name="/help", value="Este menú de ayuda.", inline=False)
         embed.add_field(name="/cumpleaños ``[add/view/delete/edit]``", value="Gestiona los cumpleaños.", inline=False)
         embed.add_field(name="/recordatorio ``[add/view/delete]``", value="Gestiona recordatorios.", inline=False)
-        embed.add_field(name="/estado imagen", value="Muestra los estados de Juni.", inline=False)
-        embed.add_field(name="/estado actual", value="Muestra un estado aleatorio de Juni.", inline=False)
-        embed.add_field(name="/carla imagen", value="Muestra los estados de Carla.", inline=False)
-        embed.add_field(name="/carla actual", value="Muestra un estado aleatorio de Carla.", inline=False)
-        embed.add_field(name="jb;exportar ``[limite]``", value="Exporta los mensajes del canal actual a un archivo .txt listo para copiar o archivar.", inline=False)
+        embed.add_field(name="/configuracion", value="Solo administradores: elige el ajuste que quieres ver, configurar o borrar. Para configurar un canal o rol, selecciona también el canal o rol correspondiente.", inline=False)
         embed.add_field(name="/reaccion ``[agregar/eliminar/list/limpiar]``", value="Gestiona reacciones para asignar roles.", inline=False)
         embed.set_footer(text="Desarrollado por KatPrz02")
         await interaction.message.edit(embed=embed, view=self)
@@ -266,42 +263,6 @@ async def help_slash(interaction: discord.Interaction):
 async def juni_prefix(ctx):
     author = ctx.author.mention
     await ctx.send(f"{author} mention <@{USER1_ID}> <@{USER2_ID}>")
-    
-    # exportar 
-
-@bot.command(name="exportar", aliases=["export"])
-@commands.bot_has_permissions(read_message_history=True, send_messages=True)
-async def exportar_command(ctx, limite: int = 100):
-    if limite <= 0:
-        await ctx.send("⚠️ El límite debe ser mayor que 0.")
-        return
-
-    if limite > 1000:
-        limite = 1000
-
-    if not isinstance(ctx.channel, discord.TextChannel):
-        await ctx.send("⚠️ Este comando solo funciona en canales de texto.")
-        return
-
-    try:
-        history = [msg async for msg in ctx.channel.history(limit=limite, oldest_first=False)]
-        history.reverse()
-    except discord.Forbidden:
-        await ctx.send("❌ No tengo permisos para leer el historial de mensajes de este canal.")
-        return
-
-    export_text = build_export_text(
-        ctx.guild.name if ctx.guild else "DM",
-        ctx.channel,
-        history,
-    )
-
-    filename = f"{ctx.channel.name}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-    file_obj = io.StringIO(export_text)
-    await ctx.send(
-        f"📄 Exportación lista con {len(history)} mensajes desde #{ctx.channel.name}.",
-        file=discord.File(file_obj, filename=filename),
-    )
 
 
 # slash sudoku (Discord Activity — misma app, ruta /sudoku)
@@ -445,5 +406,3 @@ async def on_close():
     await bot.api.close()
 
 bot.run(CONFIG["bot"]["token"])
-
-

@@ -7,10 +7,11 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from typing import Optional
+from cogs.guild_config import get_guild_channel_id, set_guild_setting
 
 CONFIG_FILE = "config.json"
 
-def _load_full_config():
+def _load_timezone():
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
@@ -19,7 +20,7 @@ def _load_full_config():
             return {}
     return {}
 
-_FULL_CONFIG = _load_full_config()
+_FULL_CONFIG = _load_timezone()
 TZ = ZoneInfo(_FULL_CONFIG.get("timezone", "Europe/Madrid"))
 DATE_FORMAT = "%d-%m"
 
@@ -39,26 +40,11 @@ async def usuario_autocomplete(interaction: discord.Interaction, current: str):
     return choices
 
 
-def _load_config():
-    """Load guild-specific config from config.json."""
-    config = _load_full_config()
-    return config.get("guilds", {})
-
-def _save_config(guilds):
-    """Save guild config back to config.json preserving other settings."""
-    config = _load_full_config()
-    config["guilds"] = guilds
-    tmp = CONFIG_FILE + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(config, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, CONFIG_FILE)
-
 class Birthdays(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self._task = None
         self._lock = asyncio.Lock()
-        self.config = _load_config()
 
     async def cog_load(self):
         self._task = asyncio.create_task(self._loop())
@@ -93,10 +79,7 @@ class Birthdays(commands.Cog):
 
                     for guild_id, matches in grouped.items():
                         try:
-                            channel_id = None
-                            guild_config = self.config.get(str(guild_id), {})
-                            if isinstance(guild_config, dict):
-                                channel_id = guild_config.get("birthdays")
+                            channel_id = get_guild_channel_id(guild_id, "birthdays")
 
                             print(f"[BIRTHDAYS] guild={guild_id} channel_id={channel_id} matches={len(matches)}", flush=True)
 
@@ -145,12 +128,7 @@ class Birthdays(commands.Cog):
 
     async def set_channel(self, guild_id: int, channel_id: int):
         async with self._lock:
-            guild_config = self.config.get(str(guild_id), {})
-            if not isinstance(guild_config, dict):
-                guild_config = {}
-            guild_config["birthdays"] = channel_id
-            self.config[str(guild_id)] = guild_config
-            _save_config(self.config)
+            set_guild_setting(guild_id, "channels", "birthdays", channel_id)
 
 ACTIONS = [
     app_commands.Choice(name="add", value="add"),

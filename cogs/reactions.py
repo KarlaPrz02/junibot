@@ -6,6 +6,7 @@ import os
 from typing import Optional
 
 DATA_FILE = "reactions.json"
+CHANNELS_KEY = "__channels__"
 
 def cargar_reacciones():
     if os.path.exists(DATA_FILE):
@@ -125,15 +126,23 @@ class ReactionRoles(commands.Cog):
                 color=discord.Color.blue()
             )
 
-            for msg_id, emojis in reacciones[guild_id].items():
+            guild_reactions = reacciones[guild_id]
+            channel_ids = guild_reactions.get(CHANNELS_KEY, {})
+            for msg_id, emojis in guild_reactions.items():
+                if msg_id == CHANNELS_KEY:
+                    continue
+
                 texto = ""
                 for emoji_item, role_id in emojis.items():
                     role = interaction.guild.get_role(int(role_id))
                     role_name = role.mention if role else f"Rol desconocido ({role_id})"
                     texto += f"{emoji_item} → {role_name}\n"
 
+                channel_id = channel_ids.get(msg_id)
+                channel = interaction.guild.get_channel(int(channel_id)) if channel_id else None
+                channel_name = channel.mention if channel else "Canal no registrado"
                 embed.add_field(
-                    name=f"Mensaje: {msg_id}",
+                    name=f"{channel_name} · Mensaje: {msg_id}",
                     value=texto,
                     inline=False
                 )
@@ -156,15 +165,25 @@ class ReactionRoles(commands.Cog):
 
         # Buscar mensaje
         message = None
-        try:
-            message = await interaction.channel.fetch_message(msg_id)
-        except:
-            for channel in interaction.guild.text_channels:
-                try:
-                    message = await channel.fetch_message(msg_id)
-                    break
-                except:
-                    continue
+        channels_to_search = [
+            channel for channel in interaction.guild.text_channels
+            if channel.id != getattr(interaction.channel, "id", None)
+        ]
+        if isinstance(interaction.channel, discord.TextChannel):
+            channels_to_search.insert(0, interaction.channel)
+        for channel in channels_to_search:
+            try:
+                message = await channel.fetch_message(msg_id)
+                break
+            except (discord.NotFound, discord.Forbidden):
+                continue
+
+        if message is None:
+            await interaction.followup.send(
+                "No encontré ese mensaje en los canales de texto a los que tengo acceso.",
+                ephemeral=True
+            )
+            return
 
         # -------- AGREGAR --------
         if accion == "agregar":
@@ -174,23 +193,26 @@ class ReactionRoles(commands.Cog):
                 )
                 return
 
-            if guild_id not in reacciones:
-                reacciones[guild_id] = {}
-            if message_id_str not in reacciones[guild_id]:
-                reacciones[guild_id][message_id_str] = {}
+            guild_reactions = reacciones.setdefault(guild_id, {})
+            if message_id_str not in guild_reactions:
+                guild_reactions[message_id_str] = {}
 
             emoji_str = emoji.strip()
-            reacciones[guild_id][message_id_str][emoji_str] = str(rol.id)
+            guild_reactions[message_id_str][emoji_str] = str(rol.id)
+            guild_reactions.setdefault(CHANNELS_KEY, {})[message_id_str] = str(message.channel.id)
             guardar_reacciones(reacciones)
 
-            if message:
-                try:
-                    await message.add_reaction(emoji_str)
-                except:
-                    pass
+            try:
+                await message.add_reaction(emoji_str)
+            except discord.HTTPException as error:
+                await interaction.followup.send(
+                    f"La configuración se guardó, pero no pude añadir {emoji_str} al mensaje: {error}",
+                    ephemeral=True
+                )
+                return
 
             await interaction.followup.send(
-                f"Configurado: {emoji_str} → {rol.mention}"
+                f"Configurado en {message.channel.mention}: {emoji_str} → {rol.mention}"
             )
 
         # -------- ELIMINAR --------
@@ -211,23 +233,28 @@ class ReactionRoles(commands.Cog):
                 )
                 return
 
+            reacciones[guild_id].setdefault(CHANNELS_KEY, {})[message_id_str] = str(message.channel.id)
             del reacciones[guild_id][message_id_str][emoji_str]
 
             if not reacciones[guild_id][message_id_str]:
                 del reacciones[guild_id][message_id_str]
-            if not reacciones[guild_id]:
+                reacciones[guild_id].get(CHANNELS_KEY, {}).pop(message_id_str, None)
+            if not any(key != CHANNELS_KEY for key in reacciones[guild_id]):
                 del reacciones[guild_id]
 
             guardar_reacciones(reacciones)
 
-            if message:
-                try:
-                    await message.clear_reaction(emoji_str)
-                except:
-                    pass
+            try:
+                await message.clear_reaction(emoji_str)
+            except discord.HTTPException as error:
+                await interaction.followup.send(
+                    f"La configuración se eliminó, pero no pude quitar {emoji_str} del mensaje: {error}",
+                    ephemeral=True
+                )
+                return
 
             await interaction.followup.send(
-                f"Reacción eliminada: {emoji_str}"
+                f"Reacción eliminada de {message.channel.mention}: {emoji_str}"
             )
 
         # -------- LIMPIAR --------
@@ -239,22 +266,24 @@ class ReactionRoles(commands.Cog):
                 return
 
             del reacciones[guild_id][message_id_str]
-
-            if not reacciones[guild_id]:
+            reacciones[guild_id].get(CHANNELS_KEY, {}).pop(message_id_str, None)
+            if not any(key != CHANNELS_KEY for key in reacciones[guild_id]):
                 del reacciones[guild_id]
 
             guardar_reacciones(reacciones)
 
-            if message:
-                try:
-                    await message.clear_reactions()
-                except:
-                    pass
+            try:
+                await message.clear_reactions()
+            except discord.HTTPException as error:
+                await interaction.followup.send(
+                    f"La configuración se eliminó, pero no pude borrar las reacciones del mensaje: {error}",
+                    ephemeral=True
+                )
+                return
 
             await interaction.followup.send(
-                f"Configuración del mensaje {mensaje_id} eliminada."
+                f"Configuración del mensaje {mensaje_id} en {message.channel.mention} eliminada."
             )
 
 async def setup(bot):
     await bot.add_cog(ReactionRoles(bot))
-

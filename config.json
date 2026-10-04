@@ -21,7 +21,8 @@
     "cogs.birthdays",
     "cogs.join_left",
     "cogs.reactions",
-    "cogs.wordle"
+    "cogs.wordle",
+    "cogs.server_config"
   ],
 
   "archivos": {
