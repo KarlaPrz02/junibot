@@ -107,6 +107,7 @@
     .ctrl-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
     .status { color: var(--muted); margin-top: 0.6rem; font-size: 0.88rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; }
+    .status p { margin: 0; }
     .link { text-decoration: none; color: var(--primary); font-weight: 600; }
     .link:hover { text-decoration: underline; }
 
@@ -166,7 +167,8 @@
     </div>
 
     <div class="status">
-      <p id="status-text">Completadas: <span id="filled-count">0</span> / 81</p>
+      <p id="status-text">Rellenas: <span id="filled-count">0</span> / 81</p>
+      <p>Tiempo: <span id="elapsed-time">00:00</span></p>
       <p><a class="link" href="{{ url_for('sudoku_menu') }}">Nuevo juego</a></p>
     </div>
   </main>
@@ -178,8 +180,14 @@
     let pencilMode = false;
     let showErrors = false;
     let selectedR = -1, selectedC = -1;
-    const history = [];          // undo stack: [{r, c, prevVal, prevPencil}]
+    const history = [];
     const pencilMarks = {};      // "r,c" → Set of numbers
+    const cells = [...document.querySelectorAll('.cell')];
+    const puzzleKey = JSON.stringify(cells.map(cell => cell.dataset.val));
+    const storageKey = 'junibot-sudoku:current';
+    let elapsedSeconds = 0;
+    let timerStartedAt = Date.now();
+    let completed = false;
 
     /* ── DOM refs ── */
     const boardEl = document.getElementById('board');
@@ -189,8 +197,69 @@
     const btnUndo = document.getElementById('btn-undo');
     const btnErrors = document.getElementById('btn-errors');
     const filledSpan = document.getElementById('filled-count');
+    const elapsedTime = document.getElementById('elapsed-time');
 
     function getCell(r, c) { return boardEl.querySelector(`.cell[data-r='${r}'][data-c='${c}']`); }
+    function copyPencilMarks() {
+      return Object.fromEntries(Object.entries(pencilMarks).map(([key, marks]) => [key, new Set(marks)]));
+    }
+    function saveGame() {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({
+          puzzle: puzzleKey,
+          board: cells.map(cell => cell.dataset.val || ''),
+          pencilMarks: Object.fromEntries(Object.entries(pencilMarks).map(([key, marks]) => [key, [...marks]])),
+          elapsedSeconds: elapsedSeconds + (completed ? 0 : Math.floor((Date.now() - timerStartedAt) / 1000)),
+          completed
+        }));
+      } catch (error) {
+        console.warn('No se pudo guardar la partida de Sudoku:', error);
+      }
+    }
+    function restoreGame() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+        if (!saved || saved.puzzle !== puzzleKey || !Array.isArray(saved.board) || saved.board.length !== cells.length) return;
+        const validBoard = saved.board.every((value, index) =>
+          (value === '' || /^[1-9]$/.test(value)) &&
+          (cells[index].dataset.given !== '1' || value === cells[index].dataset.val)
+        );
+        if (!validBoard) return;
+
+        cells.forEach((cell, index) => {
+          if (cell.dataset.given === '1') return;
+          cell.dataset.val = saved.board[index];
+          cell.textContent = saved.board[index];
+        });
+        if (saved.pencilMarks && typeof saved.pencilMarks === 'object') {
+          Object.entries(saved.pencilMarks).forEach(([key, values]) => {
+            const match = /^([0-8]),([0-8])$/.exec(key);
+            if (!match || !Array.isArray(values)) return;
+            const [, row, col] = match;
+            const cell = getCell(+row, +col);
+            const marks = values.filter(value => Number.isInteger(value) && value >= 1 && value <= 9);
+            if (cell && cell.dataset.given !== '1' && !cell.dataset.val && marks.length) {
+              pencilMarks[key] = new Set(marks);
+              renderPencil(cell, pencilMarks[key]);
+            }
+          });
+        }
+        elapsedSeconds = Number.isInteger(saved.elapsedSeconds) && saved.elapsedSeconds >= 0
+          ? saved.elapsedSeconds
+          : 0;
+        completed = saved.completed === true && cells.every((cell, index) =>
+          cell.dataset.val === String(solution[Math.floor(index / 9)][index % 9])
+        );
+      } catch (error) {
+        console.warn('No se pudo recuperar la partida de Sudoku:', error);
+      }
+    }
+    function updateTimer() {
+      const totalSeconds = elapsedSeconds + (completed ? 0 : Math.floor((Date.now() - timerStartedAt) / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      elapsedTime.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
 
     function countFilled() {
       let n = 0;
@@ -240,6 +309,7 @@
 
     /* ── Place number ── */
     function placeNumber(num) {
+      if (completed) return;
       if (selectedR < 0 || selectedC < 0) return;
       const cell = getCell(selectedR, selectedC);
       if (!cell || cell.dataset.given === '1') return;
@@ -248,17 +318,17 @@
 
       if (pencilMode) {
         // Toggle pencil mark
+        const pencilSnapshot = copyPencilMarks();
         if (!pencilMarks[key]) pencilMarks[key] = new Set();
         const set = pencilMarks[key];
-        const prevPencil = new Set(set);
         if (set.has(num)) set.delete(num); else set.add(num);
-        history.push({ r: selectedR, c: selectedC, prevVal: cell.dataset.val, prevPencil });
+        history.push({ r: selectedR, c: selectedC, prevVal: cell.dataset.val, pencilSnapshot });
         renderPencil(cell, set);
+        saveGame();
       } else {
         // Place value
         const prevVal = cell.dataset.val;
-        const prevPencil = pencilMarks[key] ? new Set(pencilMarks[key]) : null;
-        history.push({ r: selectedR, c: selectedC, prevVal: prevVal || '', prevPencil });
+        history.push({ r: selectedR, c: selectedC, prevVal: prevVal || '', pencilSnapshot: copyPencilMarks() });
 
         cell.dataset.val = num;
         cell.textContent = num;
@@ -283,6 +353,7 @@
         updateExhausted();
         selectCell(selectedR, selectedC);
         checkWin();
+        saveGame();
       }
     }
 
@@ -326,11 +397,12 @@
 
     /* ── Erase ── */
     function eraseCell() {
+      if (completed) return;
       if (selectedR < 0 || selectedC < 0) return;
       const cell = getCell(selectedR, selectedC);
       if (!cell || cell.dataset.given === '1') return;
       const key = selectedR + ',' + selectedC;
-      history.push({ r: selectedR, c: selectedC, prevVal: cell.dataset.val || '', prevPencil: pencilMarks[key] ? new Set(pencilMarks[key]) : null });
+      history.push({ r: selectedR, c: selectedC, prevVal: cell.dataset.val || '', pencilSnapshot: copyPencilMarks() });
       cell.dataset.val = '';
       cell.textContent = '';
       cell.classList.remove('wrong');
@@ -340,16 +412,15 @@
       updateFilledCount();
       updateExhausted();
       selectCell(selectedR, selectedC);
+      saveGame();
     }
 
     /* ── Undo ── */
     function undo() {
-      if (history.length === 0) return;
+      if (completed || history.length === 0) return;
       const action = history.pop();
       const cell = getCell(action.r, action.c);
       if (!cell) return;
-      const key = action.r + ',' + action.c;
-
       cell.dataset.val = action.prevVal || '';
       cell.textContent = action.prevVal || '';
       cell.classList.remove('wrong');
@@ -357,18 +428,21 @@
         cell.classList.add('wrong');
       }
 
-      if (action.prevPencil) {
-        pencilMarks[key] = action.prevPencil;
-        renderPencil(cell, action.prevPencil);
-      } else {
-        delete pencilMarks[key];
-        const pm = cell.querySelector('.pencil-marks');
-        if (pm) pm.remove();
-      }
-
+      Object.keys(pencilMarks).forEach(markKey => delete pencilMarks[markKey]);
+      Object.entries(action.pencilSnapshot).forEach(([markKey, marks]) => {
+        pencilMarks[markKey] = new Set(marks);
+      });
+      cells.forEach(markedCell => {
+        const markKey = markedCell.dataset.r + ',' + markedCell.dataset.c;
+        const marks = pencilMarks[markKey];
+        const container = markedCell.querySelector('.pencil-marks');
+        if (marks) renderPencil(markedCell, marks);
+        else if (container) container.remove();
+      });
       updateFilledCount();
       updateExhausted();
       selectCell(action.r, action.c);
+      saveGame();
     }
 
     /* ── Win check ── */
@@ -379,16 +453,26 @@
         const v = parseInt(el.dataset.val);
         if (!v || v !== solution[r][c]) won = false;
       });
-      if (won) {
+      if (won && !completed) {
+        showWin();
+      }
+    }
+
+    function showWin() {
+      if (!completed) {
+        elapsedSeconds += Math.floor((Date.now() - timerStartedAt) / 1000);
+        completed = true;
+      }
+      if (!document.querySelector('.message.success')) {
         const msg = document.createElement('div');
         msg.className = 'message success';
         msg.textContent = '🎉 ¡Has completado el Sudoku!';
-        const existing = document.querySelector('.message');
-        if (existing) existing.remove();
         document.querySelector('.sudoku-board').before(msg);
-        boardEl.querySelectorAll('.cell').forEach(el => el.style.pointerEvents = 'none');
-        numpadEl.querySelectorAll('button').forEach(b => b.disabled = true);
       }
+      boardEl.querySelectorAll('.cell').forEach(el => el.style.pointerEvents = 'none');
+      numpadEl.querySelectorAll('button').forEach(b => b.disabled = true);
+      [btnPencil, btnErase, btnUndo, btnErrors].forEach(button => button.disabled = true);
+      saveGame();
     }
 
     /* ── Events ── */
@@ -430,6 +514,7 @@
           el.classList.toggle('wrong', showErrors);
         }
       });
+      saveGame();
     });
 
     document.addEventListener('keydown', e => {
@@ -452,7 +537,17 @@
     (async function() {
       const overlay = document.getElementById('loading-overlay');
       const container = document.getElementById('app-container');
-      function show() { overlay.classList.add('hidden'); container.style.display = ''; updateFilledCount(); updateExhausted(); }
+      restoreGame();
+      function show() {
+        overlay.classList.add('hidden');
+        container.style.display = '';
+        updateFilledCount();
+        updateExhausted();
+        updateTimer();
+        checkWin();
+      }
+      setInterval(updateTimer, 1000);
+      window.addEventListener('pagehide', saveGame);
       const timer = setTimeout(show, 3000);
       try {
         if (window.DiscordSDK) {

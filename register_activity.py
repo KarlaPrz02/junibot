@@ -7,12 +7,12 @@ with open("config.json", "r", encoding="utf-8") as f:
     cfg = json.load(f)
 
 TOKEN = cfg["bot"]["token"]
-APP_ID = str(cfg.get("sudoku", {}).get("app_id", cfg.get("crucigrama", {}).get("app_id")))
+APP_ID = str(cfg["sudoku"]["app_id"])
 
 payload = json.dumps({
     "name": "launch",
     "type": 4,                # PRIMARY_ENTRY_POINT
-    "description": "Lanza la actividad de juegos",
+    "description": "Lanza la actividad de Sudoku",
     "handler": 2              # DISCORD_LAUNCH_ACTIVITY
 }).encode("utf-8")
 

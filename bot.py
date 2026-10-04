@@ -267,7 +267,7 @@ async def juni_prefix(ctx):
 
 # slash sudoku (Discord Activity — misma app, ruta /sudoku)
 
-SUDOKU_APP_ID = CONFIG.get("sudoku", {}).get("app_id", CONFIG.get("crucigrama", {}).get("app_id"))
+SUDOKU_APP_ID = CONFIG["sudoku"]["app_id"]
 
 @bot.tree.command(name="sudoku", description="Abre el Sudoku como actividad de Discord")
 async def sudoku_slash(interaction: discord.Interaction):

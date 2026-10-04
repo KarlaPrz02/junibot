@@ -3,8 +3,6 @@ import json
 import urllib.request
 import urllib.parse
 import urllib.error
-from datetime import datetime
-from zoneinfo import ZoneInfo
 from flask import Flask, session, render_template, request, redirect, url_for, jsonify
 from sudoku_engine import generate_puzzle as _sudoku_generate
 
@@ -16,7 +14,6 @@ def _load_bot_config():
         return {}
 
 _CONFIG = _load_bot_config()
-TZ = ZoneInfo(_CONFIG.get("timezone", "Europe/Madrid"))
 
 API_BASE_URL = _CONFIG.get("api", {}).get("base_url", "http://127.0.0.1:8000").rstrip("/")
 
@@ -72,30 +69,6 @@ def create_app():
     def index():
         return redirect(url_for("sudoku_menu"))
 
-    @app.route("/crossword")
-    def crossword_page():
-        return redirect(url_for("sudoku_menu"))
-
-    @app.route("/start")
-    def start():
-        return redirect(url_for("sudoku_menu"))
-
-    @app.route("/start/daily")
-    def start_daily():
-        return redirect(url_for("sudoku_menu"))
-
-    @app.route("/start/random")
-    def start_random():
-        return redirect(url_for("sudoku_menu"))
-
-    @app.route("/start/quick")
-    def start_quick():
-        return redirect(url_for("sudoku_menu"))
-
-    @app.route("/guess", methods=["POST"])
-    def guess():
-        return redirect(url_for("sudoku_menu"))
-    
     @app.route("/api-dashboard")
     def api_dashboard():
         status_data, status_error = api_get_json("/status")
