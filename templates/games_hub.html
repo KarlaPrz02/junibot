@@ -55,6 +55,13 @@
     <h1>Juni Games</h1>
     <p class="subtitle">Elige un juego para empezar a jugar.</p>
     <div class="games">
+      <a class="game-card" href="{{ url_for('start') }}">
+        <span class="game-icon">🧩</span>
+        <div class="game-info">
+          <h2>Crucigrama</h2>
+          <p>Resuelve pistas y completa la cuadrícula.</p>
+        </div>
+      </a>
       <a class="game-card" href="{{ url_for('sudoku_menu') }}">
         <span class="game-icon">🔢</span>
         <div class="game-info">

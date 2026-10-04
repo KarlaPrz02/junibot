@@ -3,8 +3,3 @@
 # What is this bot?
 
 Junibot was created with the idea of ​​pinging Juni (a friend), as time went on more new features were implemented for various conveniences.
-
-# Future features
-
-- Sudoku daily challenges
-- Sudoku difficulty selector

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Sudoku Web</title>
+  <title>Crucigrama Web</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -69,12 +69,12 @@
 <body>
   <div id="loading-overlay"><div class="spinner"></div></div>
   <main class="container" style="display:none;" id="app-container">
-    <h1>Sudoku</h1>
-    <p class="subtitle">Elige una dificultad para empezar una partida.</p>
+    <h1>Crucigrama</h1>
+    <p class="subtitle">Un diseño sencillo, enfoque en el juego y nada que distraiga.</p>
     <div class="actions">
-      <a class="button" href="{{ url_for('sudoku_start_game', difficulty='facil') }}">Fácil</a>
-      <a class="button" href="{{ url_for('sudoku_start_game', difficulty='medio') }}" style="background: var(--accent);">Medio</a>
-      <a class="button secondary" href="{{ url_for('sudoku_start_game', difficulty='dificil') }}">Difícil</a>
+      <a class="button" href="{{ url_for('start_daily') }}">Semanal</a>
+      <a class="button" href="{{ url_for('start_quick') }}" style="background: var(--accent);">Partida rápida</a>
+      <a class="button secondary" href="{{ url_for('start_random') }}">Aleatorio</a>
     </div>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1/dist/index.global.js"></script>

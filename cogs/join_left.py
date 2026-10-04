@@ -6,12 +6,10 @@ import os
 CONFIG_FILE = "config.json"
 
 def _load_config():
-    """Load guild-specific config from config.json."""
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                config = json.load(f)
-                return config.get("guilds", {})
+                return json.load(f)
         except Exception:
             return {}
     return {}
