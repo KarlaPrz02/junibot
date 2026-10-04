@@ -265,38 +265,30 @@ async def juni_prefix(ctx):
     await ctx.send(f"{author} mention <@{USER1_ID}> <@{USER2_ID}>")
 
 
-# slash sudoku (Discord Activity — misma app, ruta /sudoku)
+# slash sudoku (Discord Activity)
 
-SUDOKU_APP_ID = CONFIG["sudoku"]["app_id"]
-
-@bot.tree.command(name="sudoku", description="Abre el Sudoku como actividad de Discord")
+@bot.tree.command(
+    name="sudoku",
+    description="Abre el Sudoku como actividad de Discord"
+)
 async def sudoku_slash(interaction: discord.Interaction):
     if interaction.guild is None:
         await interaction.response.send_message(
-            "❌ Solo disponible en servidores.", ephemeral=True
+            "Solo disponible en servidores.",
+            ephemeral=True
         )
         return
 
     try:
-        activity_url = f"https://discord.com/activities/{SUDOKU_APP_ID}"
-        embed = discord.Embed(
-            title="🔢 Sudoku",
-            description="¡Haz clic en el botón para jugar al Sudoku!",
-            color=discord.Color.green(),
-        )
-        view = discord.ui.View()
-        view.add_item(
-            discord.ui.Button(
-                label="Jugar Sudoku",
-                url=activity_url,
-                style=discord.ButtonStyle.link,
-            )
-        )
-        await interaction.response.send_message(embed=embed, view=view)
+        await interaction.response.launch_activity()
     except Exception as e:
-        await interaction.response.send_message(
-            f"❌ Error al lanzar la actividad: {e}", ephemeral=True
-        )
+        print(f"[SUDOKU] Error lanzando Activity: {e}", flush=True)
+
+        if not interaction.response.is_done():
+            await interaction.response.send_message(
+                f"Error al lanzar la actividad: {e}",
+                ephemeral=True
+            )
 
 # apistats
 @bot.tree.command(name="apistats", description="Muestra las estadísticas de la API")
