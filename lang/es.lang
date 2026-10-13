@@ -1,0 +1,45 @@
+[language]
+success = ✅ Tu idioma preferido ha quedado configurado en Español.
+
+[help]
+title = Ayuda de Juni Bot
+description = Selecciona qué tipo de ayuda quieres
+general_title = Ayuda General
+general_description = Aquí tienes información general sobre los comandos del bot:
+bot_prefix = Prefijo del bot
+juni = Menciona a Juni.
+help_menu = Este menú de ayuda.
+birthdays = Gestiona los cumpleaños.
+reminders = Gestiona recordatorios.
+config = Solo administradores: elige el ajuste que quieres ver, configurar o borrar. Para configurar un canal o rol, selecciona también el canal o rol correspondiente.
+reactions = Gestiona reacciones para asignar roles.
+wordle_title = Ayuda Wordle
+wordle_description = Guía para jugar al Wordle en este bot:
+wordle_start = Inicia una partida diaria de Wordle.
+wordle_add = Añade una palabra al listado de Wordle.
+wordle_guess = Envía un intento de 5 letras.
+wordle_history = Muestra tus intentos actuales.
+wordle_stats = Tus estadísticas de Wordle.
+wordle_top = Ranking de mejores jugadores.
+reminders_title = Ayuda Recordatorios
+reminders_description = Guía para utilizar el comando recordatorios:
+reminders_what = ¿Para que sirve?
+reminders_what_value = Sirve para guardar un recodatorio y seleccionar cuando quieres que el bot te lo recuerde.
+usage_general = Uso General
+usage_add = Uso Add
+usage_view = Uso View
+usage_delete = Uso Delete
+usage_edit = Uso Edit
+usage_quick = Uso rapido
+reactions_title = Ayuda Reacciones
+reactions_description = Guía para utilizar el sistema de reacciones para asignar roles:
+reactions_what = ¿Para qué sirve?
+reactions_what_value = Permite que usuarios obtengan roles automáticamente al reaccionar con emojis en un mensaje.
+reactions_add = Agregar reacción
+reactions_delete = Eliminar reacción
+reactions_list = Listar reacciones
+reactions_clean = Limpiar mensaje
+reactions_id = Obtener ID del mensaje
+
+[commands]
+juni_mention = {user} menciona a <@{user1}> <@{user2}>

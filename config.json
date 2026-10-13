@@ -16,6 +16,15 @@
 
   "timezone": "Europe/Madrid",
 
+  "language": {
+    "default": "es",
+    "available": {
+      "es": "Español",
+      "en": "English"
+    }
+  },
+  "user_languages": {},
+
   "cogs": [
     "cogs.reminders",
     "cogs.birthdays",

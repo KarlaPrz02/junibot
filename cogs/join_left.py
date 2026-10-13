@@ -43,7 +43,7 @@ class JoinLeft(commands.Cog):
             return
         channel = await self._get_text_channel(channel_id)
         if channel:
-            await channel.send(f"{member.mention} ha abandonado el servidor")
+            await channel.send(f"{member.name} ha abandonado el servidor")
 
     async def _get_text_channel(self, channel_id: int):
         channel = self.bot.get_channel(channel_id)
