@@ -333,23 +333,23 @@ class HelpView(discord.ui.View):
         await interaction.message.edit(embed=embed, view=self)
         await interaction.response.defer()
     
-    @button(label="Ayuda Reacciones", style=discord.ButtonStyle.danger, custom_id="help_reacciones")
-    async def reacciones(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title=self.t("help", "reactions_title"),
-            description=self.t("help", "reactions_description"),
-            color=discord.Color.red()
-        )
-        embed.add_field(name=self.t("help", "reactions_what"), value=self.t("help", "reactions_what_value"), inline=False)
-        embed.add_field(name=self.t("help", "usage_general"), value="/reaccion ``[agregar/eliminar/list/limpiar]``", inline=False)
-        embed.add_field(name=self.t("help", "reactions_add"), value="/reaccion agregar ``[mensaje_id]`` ``[emoji]`` ``[rol]``\n• mensaje_id: ID del mensaje donde se ponen las reacciones\n• emoji: El emoji a usar (ej: ❤️, 🎮)\n• rol: El rol a asignar", inline=False)
-        embed.add_field(name=self.t("help", "reactions_delete"), value="/reaccion eliminar ``[mensaje_id]`` ``[emoji]``\nEliminará ese emoji del mensaje y la configuración.", inline=False)
-        embed.add_field(name=self.t("help", "reactions_list"), value="/reaccion list\nMuestra todas las reacciones configuradas en el servidor.", inline=False)
-        embed.add_field(name=self.t("help", "reactions_clean"), value="/reaccion limpiar ``[mensaje_id]``\nBorra toda la configuración de reacciones de un mensaje.", inline=False)
-        embed.add_field(name=self.t("help", "reactions_id"), value="Haz clic derecho en el mensaje → Copiar ID del mensaje (necesita Modo Desarrollador activado).", inline=False)
-        embed.set_footer(text="Desarrollado por KatPrz02")
-        await interaction.message.edit(embed=embed, view=self)
-        await interaction.response.defer()
+    # @button(label="Ayuda Reacciones", style=discord.ButtonStyle.danger, custom_id="help_reacciones")
+    # async def reacciones(self, interaction: discord.Interaction, button: discord.ui.Button):
+    #     embed = discord.Embed(
+    #         title=self.t("help", "reactions_title"),
+    #         description=self.t("help", "reactions_description"),
+    #         color=discord.Color.red()
+    #     )
+    #     embed.add_field(name=self.t("help", "reactions_what"), value=self.t("help", "reactions_what_value"), inline=False)
+    #     embed.add_field(name=self.t("help", "usage_general"), value="/reaccion ``[agregar/eliminar/list/limpiar]``", inline=False)
+    #     embed.add_field(name=self.t("help", "reactions_add"), value="/reaccion agregar ``[mensaje_id]`` ``[emoji]`` ``[rol]``\n• mensaje_id: ID del mensaje donde se ponen las reacciones\n• emoji: El emoji a usar (ej: ❤️, 🎮)\n• rol: El rol a asignar", inline=False)
+    #     embed.add_field(name=self.t("help", "reactions_delete"), value="/reaccion eliminar ``[mensaje_id]`` ``[emoji]``\nEliminará ese emoji del mensaje y la configuración.", inline=False)
+    #     embed.add_field(name=self.t("help", "reactions_list"), value="/reaccion list\nMuestra todas las reacciones configuradas en el servidor.", inline=False)
+    #     embed.add_field(name=self.t("help", "reactions_clean"), value="/reaccion limpiar ``[mensaje_id]``\nBorra toda la configuración de reacciones de un mensaje.", inline=False)
+    #     embed.add_field(name=self.t("help", "reactions_id"), value="Haz clic derecho en el mensaje → Copiar ID del mensaje (necesita Modo Desarrollador activado).", inline=False)
+    #     embed.set_footer(text="Desarrollado por KatPrz02")
+    #     await interaction.message.edit(embed=embed, view=self)
+    #     await interaction.response.defer()
 
 @bot.tree.command(name="help", description="Muestra información sobre el bot")
 async def help_slash(interaction: discord.Interaction):
@@ -394,6 +394,8 @@ async def sudoku_slash(interaction: discord.Interaction):
 
 # apistats
 @bot.tree.command(name="apistats", description="Muestra las estadísticas de la API")
+@app_commands.default_permissions(administrator=True)
+@app_commands.checks.has_permissions(administrator=True)
 async def apistats_slash(interaction: discord.Interaction):
     if not hasattr(bot, "api"):
         await interaction.response.send_message(
@@ -451,6 +453,8 @@ async def apistats_slash(interaction: discord.Interaction):
     
 #apistats
 @bot.tree.command(name="apilogs", description="Muestra los últimos logs de la API")
+@app_commands.default_permissions(administrator=True)
+@app_commands.checks.has_permissions(administrator=True)
 async def apilogs_slash(interaction: discord.Interaction, limite: int = 5):
     if not hasattr(bot, "api"):
         await interaction.response.send_message(
