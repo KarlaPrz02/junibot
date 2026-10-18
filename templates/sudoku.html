@@ -190,8 +190,11 @@
     let elapsedSeconds = 0;
     let timerStartedAt = Date.now();
     let completed = false;
+    let completedCorrectly = false;
     let statsRecorded = false;
+    let resultAnnounced = false;
     let discordAccessToken = null;
+    let discordChannelId = null;
 
     /* ── DOM refs ── */
     const boardEl = document.getElementById('board');
@@ -215,7 +218,9 @@
           pencilMarks: Object.fromEntries(Object.entries(pencilMarks).map(([key, marks]) => [key, [...marks]])),
           elapsedSeconds: elapsedSeconds + (completed ? 0 : Math.floor((Date.now() - timerStartedAt) / 1000)),
           completed,
-          statsRecorded
+          completedCorrectly,
+          statsRecorded,
+          resultAnnounced
         }));
       } catch (error) {
         console.warn('No se pudo guardar la partida de Sudoku:', error);
@@ -252,10 +257,12 @@
         elapsedSeconds = Number.isInteger(saved.elapsedSeconds) && saved.elapsedSeconds >= 0
           ? saved.elapsedSeconds
           : 0;
-        completed = saved.completed === true && cells.every((cell, index) =>
+        completed = saved.completed === true && cells.every(cell => /^[1-9]$/.test(cell.dataset.val));
+        completedCorrectly = completed && cells.every((cell, index) =>
           cell.dataset.val === String(solution[Math.floor(index / 9)][index % 9])
         );
-        statsRecorded = completed && saved.statsRecorded === true;
+        statsRecorded = completedCorrectly && saved.statsRecorded === true;
+        resultAnnounced = completed && saved.resultAnnounced === true;
       } catch (error) {
         console.warn('No se pudo recuperar la partida de Sudoku:', error);
       }
@@ -278,11 +285,11 @@
       if (document.querySelector('.stats-error')) return;
       const message = document.createElement('div');
       message.className = 'message error stats-error';
-      message.textContent = 'No se han podido guardar las estadísticas de esta partida.';
+      message.textContent = 'No se han podido guardar las estadísticas o enviar el resultado al chat.';
       document.querySelector('.sudoku-board').before(message);
     }
     async function recordSudokuWin() {
-      if (!completed || statsRecorded || !discordAccessToken) return;
+      if (!completed || !completedCorrectly || statsRecorded || !discordAccessToken) return;
       const response = await fetch('/api/sudoku/win', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -290,6 +297,7 @@
           access_token: discordAccessToken,
           game_id: gameId,
           game_state: gameState,
+          board: cells.map(cell => parseInt(cell.dataset.val)),
           elapsed_seconds: elapsedSeconds
         })
       });
@@ -297,6 +305,27 @@
         throw new Error(`Sudoku stats request failed with HTTP ${response.status}`);
       }
       statsRecorded = true;
+      saveGame();
+    }
+    async function announceSudokuResult() {
+      if (!completed || resultAnnounced || !discordAccessToken || !discordChannelId) return;
+      const response = await fetch('/api/sudoku/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token: discordAccessToken,
+          game_id: gameId,
+          game_state: gameState,
+          channel_id: discordChannelId,
+          board: cells.map(cell => parseInt(cell.dataset.val)),
+          elapsed_seconds: elapsedSeconds
+        })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.announced) {
+        throw new Error(result.error || `Sudoku announcement failed with HTTP ${response.status}`);
+      }
+      resultAnnounced = true;
       saveGame();
     }
 
@@ -478,34 +507,47 @@
 
     /* ── Win check ── */
     function checkWin() {
-      let won = true;
-      boardEl.querySelectorAll('.cell').forEach(el => {
-        const r = +el.dataset.r, c = +el.dataset.c;
-        const v = parseInt(el.dataset.val);
-        if (!v || v !== solution[r][c]) won = false;
-      });
-      if (won && !completed) {
-        showWin();
+      const fullBoard = cells.every(cell => /^[1-9]$/.test(cell.dataset.val));
+      if (completed) {
+        showCompletedGame();
+      } else if (fullBoard) {
+        finishGame(cells.every((cell, index) =>
+          cell.dataset.val === String(solution[Math.floor(index / 9)][index % 9])
+        ));
       }
     }
 
-    function showWin() {
-      if (!completed) {
-        elapsedSeconds += Math.floor((Date.now() - timerStartedAt) / 1000);
-        completed = true;
-      }
-      if (!document.querySelector('.message.success')) {
+    function showCompletedGame() {
+      const existingMessage = document.querySelector('.game-result');
+      if (!existingMessage) {
         const msg = document.createElement('div');
-        msg.className = 'message success';
-        msg.textContent = '🎉 ¡Has completado el Sudoku!';
+        msg.className = `message game-result ${completedCorrectly ? 'success' : 'error'}`;
+        msg.textContent = completedCorrectly
+          ? '🎉 ¡Has completado correctamente el Sudoku!'
+          : '🧩 La tabla está completa, pero tiene errores.';
         document.querySelector('.sudoku-board').before(msg);
       }
       boardEl.querySelectorAll('.cell').forEach(el => el.style.pointerEvents = 'none');
       numpadEl.querySelectorAll('button').forEach(b => b.disabled = true);
       [btnPencil, btnErase, btnUndo, btnErrors].forEach(button => button.disabled = true);
+    }
+
+    function finishGame(correct) {
+      if (!completed) {
+        elapsedSeconds += Math.floor((Date.now() - timerStartedAt) / 1000);
+        completed = true;
+        completedCorrectly = correct;
+      }
+      showCompletedGame();
       saveGame();
-      recordSudokuWin().catch(error => {
-        console.error('No se pudieron guardar las estadísticas de Sudoku:', error);
+      if (completedCorrectly) {
+        recordSudokuWin().catch(error => {
+          console.error('No se pudieron guardar las estadísticas de Sudoku:', error);
+          showStatsError();
+        });
+      }
+      announceSudokuResult().catch(error => {
+        console.error('No se pudo enviar el resultado de Sudoku al chat:', error);
         showStatsError();
       });
     }
@@ -588,6 +630,7 @@
         if (window.DiscordSDK) {
           const sdk = new window.DiscordSDK('{{ discord_client_id }}');
           await sdk.ready();
+          discordChannelId = sdk.channelId;
           const { code } = await sdk.commands.authorize({
             client_id: '{{ discord_client_id }}',
             response_type: 'code',
@@ -613,11 +656,19 @@
       }
       clearTimeout(timer);
       show();
-      if (completed && !statsRecorded && discordAccessToken) {
-        recordSudokuWin().catch(error => {
-          console.error('No se pudieron guardar las estadísticas de Sudoku:', error);
-          showStatsError();
-        });
+      if (completed && discordAccessToken) {
+        if (completedCorrectly && !statsRecorded) {
+          recordSudokuWin().catch(error => {
+            console.error('No se pudieron guardar las estadísticas de Sudoku:', error);
+            showStatsError();
+          });
+        }
+        if (!resultAnnounced) {
+          announceSudokuResult().catch(error => {
+            console.error('No se pudo enviar el resultado de Sudoku al chat:', error);
+            showStatsError();
+          });
+        }
       }
     })();
   </script>

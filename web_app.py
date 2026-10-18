@@ -5,6 +5,7 @@ import urllib.parse
 import urllib.error
 import secrets
 import threading
+from pathlib import Path
 from flask import Flask, session, render_template, request, redirect, url_for, jsonify
 from itsdangerous import URLSafeSerializer, BadSignature
 from sudoku_engine import generate_puzzle as _sudoku_generate
@@ -22,7 +23,10 @@ API_BASE_URL = _CONFIG.get("api", {}).get("base_url", "http://127.0.0.1:8000").r
 
 DISCORD_CLIENT_ID = "449903611128971275"
 DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET")
+DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN") or _CONFIG.get("bot", {}).get("token")
 SUDOKU_STATS_FILE = _CONFIG.get("archivos", {}).get("sudoku_stats", "sudoku_stats.json")
+SUDOKU_RESULTS_FILE = _CONFIG.get("archivos", {}).get("sudoku_results", "sudoku_results.json")
+SUDOKU_ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
 def api_get_json(endpoint: str, params: dict | None = None):
     url = f"{API_BASE_URL}{endpoint}"
@@ -150,11 +154,14 @@ def create_app():
         access_token = data.get("access_token")
         game_id = data.get("game_id")
         game_state = data.get("game_state")
+        board = data.get("board")
         elapsed_seconds = data.get("elapsed_seconds")
         if (
             not isinstance(access_token, str) or not access_token
             or not isinstance(game_id, str) or not game_id
             or not isinstance(game_state, str) or not game_state
+            or not isinstance(board, list) or len(board) != 81
+            or any(isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 9 for value in board)
             or isinstance(elapsed_seconds, bool)
             or not isinstance(elapsed_seconds, int)
             or elapsed_seconds < 0
@@ -170,6 +177,13 @@ def create_app():
             not isinstance(signed_game, dict)
             or signed_game.get("game_id") != game_id
             or difficulty not in SUDOKU_DIFFICULTIES
+            or not isinstance(signed_game.get("solution"), list)
+            or len(signed_game["solution"]) != 9
+            or any(not isinstance(row, list) or len(row) != 9 for row in signed_game["solution"])
+            or any(
+                board[row * 9 + column] != signed_game["solution"][row][column]
+                for row in range(9) for column in range(9)
+            )
         ):
             return jsonify({"error": "Invalid Sudoku game."}), 400
 
@@ -280,6 +294,171 @@ def create_app():
                 return jsonify({"error": "Could not save Sudoku statistics."}), 500
 
         return jsonify({"recorded": True})
+
+    @app.route("/api/sudoku/complete", methods=["POST"])
+    def sudoku_complete():
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({"error": "Invalid request body."}), 400
+
+        access_token = data.get("access_token")
+        game_id = data.get("game_id")
+        game_state = data.get("game_state")
+        channel_id = data.get("channel_id")
+        board = data.get("board")
+        elapsed_seconds = data.get("elapsed_seconds")
+        if (
+            not isinstance(access_token, str) or not access_token
+            or not isinstance(game_id, str) or not game_id
+            or not isinstance(game_state, str) or not game_state
+            or not isinstance(channel_id, str) or not channel_id.isdigit()
+            or not isinstance(board, list) or len(board) != 81
+            or any(isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 9 for value in board)
+            or isinstance(elapsed_seconds, bool)
+            or not isinstance(elapsed_seconds, int)
+            or elapsed_seconds < 0
+        ):
+            return jsonify({"error": "Invalid Sudoku result."}), 400
+
+        try:
+            signed_game = sudoku_signer.loads(game_state)
+        except BadSignature:
+            return jsonify({"error": "Invalid Sudoku game."}), 400
+        if not isinstance(signed_game, dict):
+            return jsonify({"error": "Invalid Sudoku game."}), 400
+        difficulty = signed_game.get("difficulty")
+        given = signed_game.get("given")
+        puzzle = signed_game.get("board")
+        solution = signed_game.get("solution")
+        if (
+            signed_game.get("game_id") != game_id
+            or difficulty not in SUDOKU_DIFFICULTIES
+            or not isinstance(given, list) or len(given) != 9
+            or any(not isinstance(row, list) or len(row) != 9 for row in given)
+            or not isinstance(puzzle, list) or len(puzzle) != 9
+            or any(not isinstance(row, list) or len(row) != 9 for row in puzzle)
+            or not isinstance(solution, list) or len(solution) != 9
+            or any(not isinstance(row, list) or len(row) != 9 for row in solution)
+            or any(
+                given[row][column] and board[row * 9 + column] != puzzle[row][column]
+                for row in range(9) for column in range(9)
+            )
+        ):
+            return jsonify({"error": "Invalid Sudoku game."}), 400
+
+        pattern = 0
+        for box_row in range(3):
+            for box_column in range(3):
+                box_is_correct = all(
+                    board[(box_row * 3 + row) * 9 + box_column * 3 + column]
+                    == solution[box_row * 3 + row][box_column * 3 + column]
+                    for row in range(3) for column in range(3)
+                )
+                if not box_is_correct:
+                    pattern |= 1 << (8 - (box_row * 3 + box_column))
+        correct = pattern == 0
+
+        try:
+            user_request = urllib.request.Request(
+                "https://discord.com/api/users/@me",
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
+            with urllib.request.urlopen(user_request, timeout=5) as response:
+                discord_user = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as error:
+            if error.code == 401:
+                return jsonify({"error": "Discord authorization has expired."}), 401
+            app.logger.error("Discord user verification failed with HTTP %s.", error.code)
+            return jsonify({"error": "Could not verify the Discord user."}), 502
+        except urllib.error.URLError:
+            app.logger.exception("Could not reach Discord to verify the user.")
+            return jsonify({"error": "Could not reach Discord to verify the user."}), 502
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            app.logger.exception("Discord returned an invalid user response.")
+            return jsonify({"error": "Discord returned an invalid user response."}), 502
+
+        user_id = discord_user.get("id") if isinstance(discord_user, dict) else None
+        if not isinstance(user_id, str) or not user_id.isdigit():
+            app.logger.error("Discord user response did not contain a valid user ID.")
+            return jsonify({"error": "Discord returned an invalid user identity."}), 502
+        if not DISCORD_BOT_TOKEN or DISCORD_BOT_TOKEN == "TU_TOKEN_AQUI":
+            app.logger.error("A valid Discord bot token is required to announce Sudoku results.")
+            return jsonify({"error": "Discord bot messaging is not configured."}), 503
+
+        with sudoku_stats_lock:
+            try:
+                with open(SUDOKU_RESULTS_FILE, "r", encoding="utf-8") as results_file:
+                    results = json.load(results_file)
+            except FileNotFoundError:
+                results = {}
+            except (json.JSONDecodeError, OSError):
+                app.logger.exception("Could not read Sudoku results from %s.", SUDOKU_RESULTS_FILE)
+                return jsonify({"error": "Could not load Sudoku results."}), 500
+
+            if not isinstance(results, dict):
+                app.logger.error("Sudoku results file has an invalid structure.")
+                return jsonify({"error": "Sudoku results have an invalid format."}), 500
+            if game_id in results:
+                previous_result = results[game_id]
+                if not isinstance(previous_result, dict) or not isinstance(previous_result.get("correct"), bool):
+                    app.logger.error("Recorded Sudoku result for game %s has an invalid structure.", game_id)
+                    return jsonify({"error": "Sudoku results have an invalid format."}), 500
+                return jsonify({"announced": True, "duplicate": True, "correct": previous_result["correct"]})
+
+            try:
+                image_path = SUDOKU_ASSETS_DIR / f"grid_{pattern:03d}.png"
+                with image_path.open("rb") as image_file:
+                    image_data = image_file.read()
+            except OSError:
+                app.logger.exception("Could not read Sudoku result image %s.", image_path)
+                return jsonify({"error": f"Sudoku result image {image_path.name} is missing or unreadable."}), 500
+
+            message = f"<@{user_id}> sudoku results:"
+            boundary = f"----JunibotSudoku{secrets.token_hex(16)}"
+            filename = image_path.name
+            payload = json.dumps({
+                "content": message,
+                "attachments": [{"id": 0, "filename": filename}],
+            }).encode("utf-8")
+            body = (
+                f"--{boundary}\r\n"
+                'Content-Disposition: form-data; name="payload_json"\r\n'
+                "Content-Type: application/json\r\n\r\n"
+            ).encode("utf-8") + payload + (
+                f"\r\n--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="files[0]"; filename="{filename}"\r\n'
+                "Content-Type: image/png\r\n\r\n"
+            ).encode("utf-8") + image_data + f"\r\n--{boundary}--\r\n".encode("utf-8")
+            discord_message = urllib.request.Request(
+                f"https://discord.com/api/v10/channels/{channel_id}/messages",
+                data=body,
+                headers={
+                    "Authorization": f"Bot {DISCORD_BOT_TOKEN}",
+                    "Content-Type": f"multipart/form-data; boundary={boundary}",
+                },
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(discord_message, timeout=5):
+                    pass
+            except urllib.error.HTTPError as error:
+                app.logger.error("Could not announce Sudoku result in channel %s (HTTP %s).", channel_id, error.code)
+                return jsonify({"error": "Could not send the Sudoku result to its Discord channel."}), 502
+            except urllib.error.URLError:
+                app.logger.exception("Could not reach Discord to announce Sudoku result.")
+                return jsonify({"error": "Could not reach Discord to send the Sudoku result."}), 502
+
+            results[game_id] = {"correct": correct}
+            temporary_file = f"{SUDOKU_RESULTS_FILE}.tmp"
+            try:
+                with open(temporary_file, "w", encoding="utf-8") as results_file:
+                    json.dump(results, results_file, ensure_ascii=False, indent=4)
+                os.replace(temporary_file, SUDOKU_RESULTS_FILE)
+            except OSError:
+                app.logger.exception("Could not save Sudoku results to %s.", SUDOKU_RESULTS_FILE)
+                return jsonify({"error": "The result was sent, but could not be recorded."}), 500
+
+        return jsonify({"announced": True, "correct": correct, "pattern": pattern})
 
     @app.route("/sudoku/start/<difficulty>")
     def sudoku_start_game(difficulty):

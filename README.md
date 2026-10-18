@@ -4,12 +4,12 @@
 
 Junibot was created with the idea of ​​pinging Juni (a friend), as time went on more new features were implemented for various conveniences.
 
-## Estadísticas de juegos
+## Game statistics
 
-Usa `/stats juego:Wordle` o `/stats juego:Sudoku` para consultar tus resultados.
-Las estadísticas de Sudoku incluyen victorias, victorias por dificultad y mejor tiempo.
+Use `/stats game:Wordle` or `/stats game:Sudoku` to view your results.
+Sudoku statistics include wins, wins by difficulty, and your best time.
 
-Para guardar las victorias de Sudoku, configura `DISCORD_CLIENT_SECRET` como variable
-de entorno del proceso que ejecuta `web_app.py`. Se obtiene en el portal de
-desarrolladores de Discord y permite validar la identidad del jugador de la Activity;
-no debe guardarse en el repositorio ni exponerse al cliente.
+To save Sudoku wins, set `DISCORD_CLIENT_SECRET` as an environment variable for the
+process running `web_app.py`. You can obtain it from the Discord Developer Portal.
+It is used to verify the Activity player's identity; **do not** store it in the repository
+or expose it to the client.

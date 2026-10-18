@@ -40,6 +40,7 @@
     "reactions": "reactions.json",
     "stats": "stats.json",
     "sudoku_stats": "sudoku_stats.json",
+    "sudoku_results": "sudoku_results.json",
     "palabras": "palabras.txt"
   },
 
