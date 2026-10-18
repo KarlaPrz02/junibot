@@ -21,6 +21,7 @@ def _load_bot_config():
 _CONFIG = _load_bot_config()
 _WORDLE_CFG = _CONFIG.get("wordle", {})
 STATS_FILE = _CONFIG.get("archivos", {}).get("stats", "stats.json")
+SUDOKU_STATS_FILE = _CONFIG.get("archivos", {}).get("sudoku_stats", "sudoku_stats.json")
 PALABRAS_FILE = _CONFIG.get("archivos", {}).get("palabras", "palabras.txt")
 _TZ = ZoneInfo(_CONFIG.get("timezone", "Europe/Madrid"))
 FECHA_INICIO = datetime.strptime(_WORDLE_CFG.get("fecha_inicio", "2025-06-06"), "%Y-%m-%d").replace(tzinfo=_TZ).date()
@@ -326,17 +327,73 @@ class Wordle(commands.Cog):
             self.ended_games[user_id] = partida
             del self.active_games[user_id]
 
-    @app_commands.command(name="stats", description="Muestra tus estadísticas de Wordle")
-    async def stats_slash(self, interaction: discord.Interaction):
+    @app_commands.command(name="stats", description="Muestra tus estadísticas de Wordle o Sudoku")
+    @app_commands.choices(juego=[
+        app_commands.Choice(name="Wordle", value="wordle"),
+        app_commands.Choice(name="Sudoku", value="sudoku"),
+    ])
+    async def stats_slash(
+        self,
+        interaction: discord.Interaction,
+        juego: app_commands.Choice[str],
+    ):
         user_id = interaction.user.id
-        stats = self.user_stats.get(user_id, {"victorias": 0, "derrotas": 0})
+        if juego.value == "wordle":
+            stats = self.user_stats.get(user_id, {})
+            embed = discord.Embed(
+                title=f"Estadísticas de Wordle de {interaction.user.display_name}",
+                color=discord.Color.green()
+            )
+            embed.add_field(name="Victorias", value=str(stats.get("victorias", 0)), inline=True)
+            embed.add_field(name="Derrotas", value=str(stats.get("derrotas", 0)), inline=True)
+        else:
+            try:
+                with open(SUDOKU_STATS_FILE, "r", encoding="utf-8") as stats_file:
+                    sudoku_stats = json.load(stats_file)
+            except FileNotFoundError:
+                sudoku_stats = {}
+            except (json.JSONDecodeError, OSError):
+                print(f"⚠️ No se pudieron leer las estadísticas de Sudoku desde '{SUDOKU_STATS_FILE}'.")
+                await interaction.response.send_message(
+                    "❌ No se pudieron cargar las estadísticas de Sudoku.",
+                    ephemeral=True,
+                )
+                return
 
-        embed = discord.Embed(
-            title=f"Estadísticas de {interaction.user.display_name}",
-            color=discord.Color.green()
-        )
-        embed.add_field(name="Victorias", value=str(stats["victorias"]), inline=True)
-        embed.add_field(name="Derrotas", value=str(stats["derrotas"]), inline=True)
+            if not isinstance(sudoku_stats, dict):
+                print(f"⚠️ El archivo '{SUDOKU_STATS_FILE}' tiene un formato no válido.")
+                await interaction.response.send_message(
+                    "❌ El archivo de estadísticas de Sudoku tiene un formato no válido.",
+                    ephemeral=True,
+                )
+                return
+            stats = sudoku_stats.get(str(user_id), {})
+            if not isinstance(stats, dict):
+                stats = {}
+            difficulty_stats = stats.get("por_dificultad", {})
+            if not isinstance(difficulty_stats, dict):
+                difficulty_stats = {}
+
+            best_time = stats.get("mejor_tiempo_segundos")
+            best_time_text = "Sin partidas completadas"
+            if isinstance(best_time, int) and not isinstance(best_time, bool) and best_time >= 0:
+                best_time_text = f"{best_time // 60:02}:{best_time % 60:02}"
+
+            embed = discord.Embed(
+                title=f"Estadísticas de Sudoku de {interaction.user.display_name}",
+                color=discord.Color.green()
+            )
+            embed.add_field(name="Victorias", value=str(stats.get("victorias", 0)), inline=True)
+            embed.add_field(name="Mejor tiempo", value=best_time_text, inline=True)
+            embed.add_field(
+                name="Victorias por dificultad",
+                value=(
+                    f"Fácil: {difficulty_stats.get('facil', 0)}\n"
+                    f"Medio: {difficulty_stats.get('medio', 0)}\n"
+                    f"Difícil: {difficulty_stats.get('dificil', 0)}"
+                ),
+                inline=False,
+            )
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 

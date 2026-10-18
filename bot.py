@@ -309,7 +309,7 @@ class HelpView(discord.ui.View):
         embed.add_field(name="/wordle ``añadir`` ``<palabra>``", value=self.t("help", "wordle_add"), inline=False)
         embed.add_field(name="/intento <palabra>", value=self.t("help", "wordle_guess"), inline=False)
         embed.add_field(name="/historial", value=self.t("help", "wordle_history"), inline=False)
-        embed.add_field(name="/stats", value=self.t("help", "wordle_stats"), inline=False)
+        embed.add_field(name="/stats <juego>", value=self.t("help", "wordle_stats"), inline=False)
         embed.add_field(name="/top", value=self.t("help", "wordle_top"), inline=False)
         embed.set_footer(text="Desarrollado por KatPrz02")
         await interaction.message.edit(embed=embed, view=self)

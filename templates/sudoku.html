@@ -177,6 +177,8 @@
   <script>
     /* ── State ── */
     const solution = {{ solution|tojson }};
+    const gameId = {{ game_id|tojson }};
+    const gameState = {{ game_state|tojson }};
     let pencilMode = false;
     let showErrors = false;
     let selectedR = -1, selectedC = -1;
@@ -188,6 +190,8 @@
     let elapsedSeconds = 0;
     let timerStartedAt = Date.now();
     let completed = false;
+    let statsRecorded = false;
+    let discordAccessToken = null;
 
     /* ── DOM refs ── */
     const boardEl = document.getElementById('board');
@@ -210,7 +214,8 @@
           board: cells.map(cell => cell.dataset.val || ''),
           pencilMarks: Object.fromEntries(Object.entries(pencilMarks).map(([key, marks]) => [key, [...marks]])),
           elapsedSeconds: elapsedSeconds + (completed ? 0 : Math.floor((Date.now() - timerStartedAt) / 1000)),
-          completed
+          completed,
+          statsRecorded
         }));
       } catch (error) {
         console.warn('No se pudo guardar la partida de Sudoku:', error);
@@ -250,6 +255,7 @@
         completed = saved.completed === true && cells.every((cell, index) =>
           cell.dataset.val === String(solution[Math.floor(index / 9)][index % 9])
         );
+        statsRecorded = completed && saved.statsRecorded === true;
       } catch (error) {
         console.warn('No se pudo recuperar la partida de Sudoku:', error);
       }
@@ -268,6 +274,31 @@
     }
 
     function updateFilledCount() { filledSpan.textContent = countFilled(); }
+    function showStatsError() {
+      if (document.querySelector('.stats-error')) return;
+      const message = document.createElement('div');
+      message.className = 'message error stats-error';
+      message.textContent = 'No se han podido guardar las estadísticas de esta partida.';
+      document.querySelector('.sudoku-board').before(message);
+    }
+    async function recordSudokuWin() {
+      if (!completed || statsRecorded || !discordAccessToken) return;
+      const response = await fetch('/api/sudoku/win', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token: discordAccessToken,
+          game_id: gameId,
+          game_state: gameState,
+          elapsed_seconds: elapsedSeconds
+        })
+      });
+      if (!response.ok) {
+        throw new Error(`Sudoku stats request failed with HTTP ${response.status}`);
+      }
+      statsRecorded = true;
+      saveGame();
+    }
 
     function updateExhausted() {
       const counts = {};
@@ -473,6 +504,10 @@
       numpadEl.querySelectorAll('button').forEach(b => b.disabled = true);
       [btnPencil, btnErase, btnUndo, btnErrors].forEach(button => button.disabled = true);
       saveGame();
+      recordSudokuWin().catch(error => {
+        console.error('No se pudieron guardar las estadísticas de Sudoku:', error);
+        showStatsError();
+      });
     }
 
     /* ── Events ── */
@@ -553,10 +588,37 @@
         if (window.DiscordSDK) {
           const sdk = new window.DiscordSDK('{{ discord_client_id }}');
           await sdk.ready();
+          const { code } = await sdk.commands.authorize({
+            client_id: '{{ discord_client_id }}',
+            response_type: 'code',
+            state: '',
+            prompt: 'none',
+            scope: ['identify']
+          });
+          const tokenResponse = await fetch('/api/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
+          });
+          const tokenData = await tokenResponse.json();
+          if (!tokenResponse.ok || !tokenData.access_token) {
+            throw new Error(tokenData.error || `OAuth request failed with HTTP ${tokenResponse.status}`);
+          }
+          discordAccessToken = tokenData.access_token;
+          await sdk.commands.authenticate({ access_token: discordAccessToken });
         }
-      } catch(e) { console.log('Discord SDK error:', e); }
+      } catch(e) {
+        console.error('Discord Activity authentication error:', e);
+        showStatsError();
+      }
       clearTimeout(timer);
       show();
+      if (completed && !statsRecorded && discordAccessToken) {
+        recordSudokuWin().catch(error => {
+          console.error('No se pudieron guardar las estadísticas de Sudoku:', error);
+          showStatsError();
+        });
+      }
     })();
   </script>
 </body>
