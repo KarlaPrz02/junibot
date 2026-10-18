@@ -4,6 +4,7 @@ import urllib.request
 import urllib.parse
 import urllib.error
 from flask import Flask, session, render_template, request, redirect, url_for, jsonify
+from itsdangerous import URLSafeSerializer, BadSignature
 from sudoku_engine import generate_puzzle as _sudoku_generate
 
 def _load_bot_config():
@@ -95,26 +96,48 @@ def create_app():
     def sudoku_menu():
         return render_template("sudoku_menu.html", discord_client_id=DISCORD_CLIENT_ID)
 
+    # El estado de la partida viaja en un token firmado en la URL.
+    # Así no dependemos de que la cookie de sesión de Flask se conserve
+    # dentro del iframe/proxy de Discord.
+    sudoku_signer = URLSafeSerializer(app.secret_key, salt="junibot-sudoku-game")
+
     @app.route("/sudoku/start/<difficulty>")
     def sudoku_start_game(difficulty):
         if difficulty not in SUDOKU_DIFFICULTIES:
             difficulty = "medio"
+
         puzzle, sol = _sudoku_generate(difficulty)
-        session["sudoku_puzzle"] = puzzle
-        session["sudoku_solution"] = sol
-        session["sudoku_board"] = [row[:] for row in puzzle]
-        session["sudoku_given"] = [[1 if puzzle[r][c] != 0 else 0 for c in range(9)] for r in range(9)]
-        session["sudoku_difficulty"] = difficulty
-        return redirect(url_for("sudoku_play"))
+        given = [[1 if puzzle[r][c] != 0 else 0 for c in range(9)] for r in range(9)]
+        state = sudoku_signer.dumps({
+            "board": puzzle,
+            "solution": sol,
+            "given": given,
+            "difficulty": difficulty,
+        })
+        return redirect(url_for("sudoku_play", state=state))
 
     @app.route("/sudoku/play")
     def sudoku_play():
-        board = session.get("sudoku_board")
-        if board is None:
+        state = request.args.get("state", "")
+        if not state:
             return redirect(url_for("sudoku_menu"))
-        sol = session.get("sudoku_solution", [[0]*9]*9)
-        given = session.get("sudoku_given", [[0]*9]*9)
-        diff = session.get("sudoku_difficulty", "medio")
+
+        try:
+            game = sudoku_signer.loads(state)
+            board = game["board"]
+            sol = game["solution"]
+            given = game["given"]
+            diff = game["difficulty"]
+            if (
+                diff not in SUDOKU_DIFFICULTIES
+                or len(board) != 9 or any(len(row) != 9 for row in board)
+                or len(sol) != 9 or any(len(row) != 9 for row in sol)
+                or len(given) != 9 or any(len(row) != 9 for row in given)
+            ):
+                raise BadSignature("Invalid Sudoku state")
+        except (BadSignature, KeyError, TypeError, ValueError):
+            return redirect(url_for("sudoku_menu"))
+
         empty_count = sum(1 for r in range(9) for c in range(9) if given[r][c] == 0)
         return render_template(
             "sudoku.html",
